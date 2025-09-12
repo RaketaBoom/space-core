@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: space-core
+
+db:
+  postgres:
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+
+
