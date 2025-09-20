@@ -1,11 +1,9 @@
 package org.example.spacecore.bot.service
 
 import org.example.spacecore.bot.model.Profile
-import org.example.spacecore.bot.util.createSendMessage
 import org.example.spacecore.bot.util.createSendPhoto
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
@@ -17,7 +15,7 @@ class MatchService(
     private val profileService: ProfileService
 ) {
 
-    fun createLikeNotification(likerProfile: Profile, likedUserTelegramId: Long, telegramClient: TelegramClient): List<SendMessage> {
+    fun sendLikeNotification(likerProfile: Profile, likedUserTelegramId: Long, telegramClient: TelegramClient){
         val messageText = """
             ❤️ Ваша анкета понравилась пользователю!
             
@@ -29,7 +27,7 @@ class MatchService(
         val keyboard = listOf(
             InlineKeyboardRow(
                 InlineKeyboardButton("❤️ Взаимная симпатия").apply {
-                    callbackData = "match_${likerProfile.telegramId}"
+                    callbackData = "match_${likerProfile.id}"
                 }
             )
         )
@@ -39,8 +37,8 @@ class MatchService(
             ❤️ Ваша симпатия отправлена!
         """.trimIndent()
         val myMessage = SendMessage(likerProfile.telegramId.toString(), myMessageText)
+        telegramClient.execute(myMessage)
 
-        return listOf(myMessage)
     }
 
     fun createMatchNotification(user1Id: Long, user2Id: Long): List<SendMessage> {

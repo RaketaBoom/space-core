@@ -136,6 +136,11 @@ class ProfileService(
         }
     }
 
+    fun getTelegramId(id: Long): Long {
+        val profile = profileRepository.findById(id)
+        return profile?.telegramId ?: 0
+    }
+
     data class UserInfo(
         val id: Long,
         val username: String?,

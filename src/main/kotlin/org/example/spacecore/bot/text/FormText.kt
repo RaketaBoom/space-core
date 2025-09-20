@@ -53,5 +53,21 @@ class FormText {
                 "Выберите ваш вайб (0-9):", Keyboard.vibeKeyboard())
             )
         }
+
+        //Редактирование профиля
+        fun editProfile(msg: MessageDto): List<SendMessage>{
+            return createMessages(msg,
+                listOf(
+                    "Давайте создадим вашу анкету сначала! Как вас зовут?"
+                )
+            )
+        }
+        fun changeName(msg: MessageDto): List<SendMessage>{
+            return createMessages(msg,
+                listOf(
+                    "Как вас зовут?"
+                )
+            )
+        }
     }
 }

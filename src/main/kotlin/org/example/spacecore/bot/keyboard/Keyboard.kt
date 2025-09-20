@@ -62,7 +62,7 @@ class Keyboard {
         fun profile(profile: Profile): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("❤️", "like_${profile.telegramId}"), mutableListOf("👎","dislike_${profile.telegramId}")),
+                    mutableListOf(mutableListOf("❤️", "like_${profile.id}"), mutableListOf("👎","dislike_${profile.id}")),
                     mutableListOf(MENU)
                 )
             )
@@ -71,7 +71,9 @@ class Keyboard {
         fun myProfile(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("Редактировать", "edit"), mutableListOf("Сменить вайб", "change_vibe")),
+                    mutableListOf(mutableListOf("Заполнить сначала", "edit"), mutableListOf("Сменить вайб", "change_vibe")),
+                    mutableListOf(mutableListOf("Имя", "change_name"), mutableListOf("Возраст", "change_age")),
+                    mutableListOf(mutableListOf("Фото", "change_photo"), mutableListOf("Описание", "change_description")),
                     mutableListOf(MENU),
                     mutableListOf(PROFILES)
                 )
@@ -93,6 +95,14 @@ class Keyboard {
                     mutableListOf(PROFILES),
                     mutableListOf(MENU),
                     mutableListOf(mutableListOf("Моя анкета", "my_profile"))
+                )
+            )
+        }
+
+        fun openForm(profileId: Long): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Открыть анкету", "open_$profileId"))
                 )
             )
         }

@@ -41,6 +41,11 @@ class ProfileRepository(
         return jdbcTemplate.query(sql, profileRowMapper, telegramId).firstOrNull()
     }
 
+    fun findById(id: Long): Profile? {
+        val sql = "SELECT * FROM profiles WHERE id = ?"
+        return jdbcTemplate.query(sql, profileRowMapper, id).firstOrNull()
+    }
+
     fun existsByTelegramId(telegramId: Long): Boolean {
         val sql = "SELECT COUNT(*) FROM profiles WHERE telegram_id = ?"
         return jdbcTemplate.queryForObject(sql, Int::class.java, telegramId) ?: 0 > 0

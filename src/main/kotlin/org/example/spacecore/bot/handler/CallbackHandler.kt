@@ -2,7 +2,6 @@ package org.example.spacecore.bot.handler
 
 import org.example.spacecore.bot.dto.MessageDto
 import org.example.spacecore.bot.dto.createMessageDto
-import org.example.spacecore.bot.keyboard.Keyboard
 import org.example.spacecore.bot.model.Gender
 import org.example.spacecore.bot.model.Profile
 import org.example.spacecore.bot.model.UserState
@@ -19,7 +18,6 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 import org.telegram.telegrambots.meta.generics.TelegramClient
 import java.util.concurrent.ConcurrentHashMap
 import org.example.spacecore.bot.util.createProfileMessage
-import org.example.spacecore.bot.util.createSendMessage
 import org.example.spacecore.bot.util.createUser
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 
@@ -38,33 +36,46 @@ class CallbackHandler(
             messageDto.data.startsWith("gender_") -> handleGender(messageDto, telegramClient)
             messageDto.data.startsWith("looking_") -> handleLookingForSelection(messageDto, telegramClient)
             messageDto.data.startsWith("vibe_") -> handleVibeSelection(messageDto, telegramClient)
+
             messageDto.data.startsWith("like_") -> handleLike(messageDto, telegramClient)
             messageDto.data.startsWith("dislike_") -> handleDislike(messageDto, telegramClient)
             messageDto.data.startsWith("match_") -> handleMatch(messageDto, telegramClient)
+
             messageDto.data == "profiles" -> handleProfiles(messageDto, telegramClient)
             messageDto.data == "my_profile" -> handleMyProfile(messageDto, telegramClient)
             messageDto.data == "menu" -> handleMenu(messageDto, telegramClient)
+            messageDto.data.startsWith("open_") -> handleMyProfile(messageDto, telegramClient)
+
+            messageDto.data == "edit" -> handleEdit(messageDto, telegramClient)
+            messageDto.data == "change_vibe" -> handleChangeVibe(messageDto, telegramClient)
+            messageDto.data == "change_name" -> handleChangeName(messageDto, telegramClient)
+            messageDto.data == "change_age" -> handleChangeAge(messageDto, telegramClient)
+            messageDto.data == "change_photo" -> handleChangePhoto(messageDto, telegramClient)
+            messageDto.data == "change_description" -> handleDescription(messageDto, telegramClient)
             else -> handleMenu(messageDto, telegramClient)
         }
     }
 
     private fun handleGender(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         val gender = Gender.fromString(msg.data.removePrefix("gender_"))
         profileService.updateGender(msg.userId, gender)
         userStateService.updateState(msg.userId, UserState.SELECTING_LOOKING_FOR)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
-        return FormText.lookingFor(msg)
+        return getMessageOrMyProfile(!editing,FormText.lookingFor(msg), msg, telegramClient)
     }
 
     private fun handleLookingForSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         val lookingFor = Gender.fromString(msg.data.removePrefix("looking_"))
         profileService.updateLookingFor(msg.userId, lookingFor)
         userStateService.updateState(msg.userId, UserState.ENTERING_DESCRIPTION)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
-
-        return FormText.description(msg)
+        return getMessageOrMyProfile(!editing,FormText.description(msg), msg, telegramClient)
     }
 
     private fun handleVibeSelection(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
@@ -75,6 +86,7 @@ class CallbackHandler(
         userStateService.updateState(msg.userId, UserState.MY_PROFILE)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        userStateService.clearTempData(msg.userId)
 
         val profile = profileService.getOrCreateProfile(msg.userId)
 
@@ -82,12 +94,6 @@ class CallbackHandler(
         loadProfilesForBrowsing(msg, profile)
         telegramClient.execute(createProfileMessage(msg, profile, true))
 
-        return listOf()
-    }
-
-    private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
-        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
-        getNextProfile(msg, telegramClient)
         return listOf()
     }
 
@@ -105,7 +111,7 @@ class CallbackHandler(
         userStateService.updateState(msg.userId, UserState.MENU)
         browsingQueue.remove(msg.userId)
 
-            MessageUtil.deleteMessage(msg, telegramClient)
+        MessageUtil.deleteMessage(msg, telegramClient)
 
         return MenuText.menu(msg)
     }
@@ -113,30 +119,93 @@ class CallbackHandler(
     private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         userStateService.updateState(msg.userId, UserState.BROWSING_PROFILES)
 
-        MessageUtil.deleteMessage(msg,telegramClient)
+        MessageUtil.deleteMessage(msg, telegramClient)
         getNextProfile(msg, telegramClient)
         return listOf()
     }
 
     private fun handleLike(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
-        val likedUserId = msg.data.removePrefix("like_").toLong()
-        val userProfile = profileService.getOrCreateProfile(msg.userId )
+        profileService.updateUserName(msg.userId, createUser(msg))
+        val profileId = msg.data.removePrefix("like_").toLong()
+        val likedUserId = profileService.getTelegramId(profileId)
+        val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
+        if (profileId == lastProfileId) {
+            val userProfile = profileService.getOrCreateProfile(msg.userId)
 
-        val notification = matchService.createLikeNotification(userProfile, likedUserId, telegramClient)
+            MessageUtil.editMessageForm(msg.chatId, msg.messageId, likedUserId, telegramClient)
 
-        MessageUtil.deleteMessage(msg,telegramClient)
+            matchService.sendLikeNotification(userProfile, likedUserId, telegramClient)
 
-        getNextProfile(msg, telegramClient)
-        return notification
+            getNextProfile(msg, telegramClient)
+        }
+        return listOf()
+    }
+
+    private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        val profileId = msg.data.removePrefix("dislike_").toLong()
+        val likedUserId = profileService.getTelegramId(profileId)
+        val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
+        if (profileId == lastProfileId) {
+            MessageUtil.editMessageForm(msg.chatId, msg.messageId, likedUserId, telegramClient)
+            getNextProfile(msg, telegramClient)
+        }
+        return listOf()
     }
 
     private fun handleMatch(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
-        val matchedUserId = msg.data.removePrefix("match_").toLong()
+        val matchedUserId = profileService.getTelegramId(msg.data.removePrefix("match_").toLong())
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
         return matchService.createMatchNotification(msg.userId, matchedUserId)
     }
 
+    //Редактирование профиля
+    private fun handleEdit(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
+        profileService.updateUserName(msg.userId, createUser(msg))
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+        return FormText.editProfile(msg)
+    }
+
+    private fun handleChangeVibe(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        userStateService.updateStateAndData(msg.userId, UserState.SELECTING_VIBE, mapOf("edit" to true))
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+
+        return FormText.vibe(msg)
+    }
+
+    private fun handleChangeName(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        userStateService.updateStateAndData(msg.userId, UserState.ENTERING_NAME, mapOf("edit" to true))
+        profileService.updateUserName(msg.userId, createUser(msg))
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+        return FormText.changeName(msg)
+    }
+
+    private fun handleChangeAge(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        userStateService.updateStateAndData(msg.userId, UserState.ENTERING_AGE, mapOf("edit" to true))
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+        return FormText.age(msg)
+    }
+
+    private fun handleChangePhoto(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        userStateService.updateStateAndData(msg.userId, UserState.UPLOADING_PHOTO, mapOf("edit" to true))
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+        return FormText.photo(msg)
+    }
+
+    private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        userStateService.updateStateAndData(msg.userId, UserState.ENTERING_DESCRIPTION, mapOf("edit" to true))
+
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return FormText.description(msg)
+    }
+
+    //Функции-утилиты
     private fun getNextProfile(msg: MessageDto, telegramClient: TelegramClient) {
         val queue = browsingQueue[msg.userId] ?: mutableListOf()
 
@@ -148,6 +217,7 @@ class CallbackHandler(
 
         val nextProfile = browsingQueue[msg.userId]?.removeFirstOrNull()
         if (nextProfile != null) {
+            userStateService.updateTempData(msg.userId, mapOf("profileId" to nextProfile.id))
             telegramClient.execute(createProfileMessage(msg, nextProfile))
         } else {
             MenuText.formEnded(msg).forEach { response ->
@@ -159,5 +229,18 @@ class CallbackHandler(
     private fun loadProfilesForBrowsing(msg: MessageDto, userProfile: Profile) {
         val matchingProfiles = profileService.findMatchingProfiles(userProfile)
         browsingQueue[msg.userId] = matchingProfiles.toMutableList()
+    }
+
+    fun getMessageOrMyProfile(bool: Boolean, message:  List<SendMessage>, msg: MessageDto, telegramClient: TelegramClient ): List<SendMessage>{
+        if (bool) {
+            return message
+        } else {
+            userStateService.clearTempData(msg.userId)
+            userStateService.updateState(msg.userId, UserState.MY_PROFILE)
+
+            val profile = profileService.getOrCreateProfile(msg.userId)
+            telegramClient.execute(createProfileMessage(msg, profile, true))
+            return listOf()
+        }
     }
 }

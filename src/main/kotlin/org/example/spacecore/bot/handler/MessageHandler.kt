@@ -2,23 +2,16 @@ package org.example.spacecore.bot.handler
 
 import org.example.spacecore.bot.dto.MessageDto
 import org.example.spacecore.bot.dto.createMessageDto
-import org.example.spacecore.bot.keyboard.Keyboard
-import org.telegram.telegrambots.meta.api.objects.User
 import org.example.spacecore.bot.model.UserState
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.FormText
 import org.example.spacecore.bot.util.MessageUtil
-import org.example.spacecore.bot.util.createSendMessage
 import org.example.spacecore.bot.util.createUser
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 import org.telegram.telegrambots.meta.generics.TelegramClient
-import java.util.concurrent.ConcurrentHashMap
 
 
 @Component
@@ -63,15 +56,20 @@ class MessageHandler(
     }
 
     private fun handleName(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         profileService.updateName(msg.userId, msg.text)
         userStateService.updateState(msg.userId, UserState.ENTERING_AGE)
 
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
-        return FormText.age(msg)
+
+        return callbackHandler.getMessageOrMyProfile(!editing,FormText.age(msg), msg, telegramClient)
     }
 
     private fun handleAge(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         val age = msg.text.toIntOrNull()
         return if (age != null && age in 18..100) {
             profileService.updateAge(msg.userId, age)
@@ -80,22 +78,27 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-            FormText.gender(msg)
+            callbackHandler.getMessageOrMyProfile(!editing,FormText.gender(msg), msg, telegramClient)
         } else {
             FormText.errorAge(msg)
         }
     }
 
     private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         profileService.updateDescription(msg.userId, msg.text)
         userStateService.updateState(msg.userId, UserState.UPLOADING_PHOTO)
 
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
-        return FormText.photo(msg)
+
+        return callbackHandler.getMessageOrMyProfile(!editing,FormText.photo(msg), msg, telegramClient)
     }
 
     private fun handlePhotoMessage(msg: MessageDto,message: Message, state: UserState, telegramClient: TelegramClient): List<SendMessage> {
+        val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
+
         return if (state == UserState.UPLOADING_PHOTO) {
             val photo = message.photo.last()
             val messageId = message.messageId
@@ -105,7 +108,7 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.userId, messageId - 1, telegramClient)
 
-             FormText.vibe(msg)
+            callbackHandler.getMessageOrMyProfile(!editing,FormText.vibe(msg), msg, telegramClient)
         } else emptyList()
     }
 }
