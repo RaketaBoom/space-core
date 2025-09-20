@@ -24,7 +24,8 @@ import java.util.concurrent.ConcurrentHashMap
 @Component
 class MessageHandler(
     private val profileService: ProfileService,
-    private val userStateService: UserStateService
+    private val userStateService: UserStateService,
+    private val callbackHandler: CallbackHandler
 ) {
 
     fun handleMessage(message: Message, telegramClient: TelegramClient): List<SendMessage> {
@@ -67,7 +68,7 @@ class MessageHandler(
 
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
-        return FormText.name(msg)
+        return FormText.age(msg)
     }
 
     private fun handleAge(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
@@ -79,9 +80,9 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-            listOf(createSendMessage(msg, "Выберите ваш пол:", Keyboard.genderKeyboard()))
+            FormText.gender(msg)
         } else {
-            listOf(createSendMessage(msg, "Пожалуйста, введите корректный возраст (18-100)"))
+            FormText.errorAge(msg)
         }
     }
 
@@ -91,11 +92,11 @@ class MessageHandler(
 
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
-        return listOf(createSendMessage(msg, "Отправьте ваше фото:"))
+        return FormText.photo(msg)
     }
 
     private fun handlePhotoMessage(msg: MessageDto,message: Message, state: UserState, telegramClient: TelegramClient): List<SendMessage> {
-        if (state == UserState.UPLOADING_PHOTO) {
+        return if (state == UserState.UPLOADING_PHOTO) {
             val photo = message.photo.last()
             val messageId = message.messageId
             profileService.updatePhoto(msg.userId, photo.fileId)
@@ -104,8 +105,7 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.userId, messageId - 1, telegramClient)
 
-            return listOf(createSendMessage(msg, "Выберите ваш вайб (0-9):", Keyboard.vibeKeyboard()))
-        }
-        return emptyList()
+             FormText.vibe(msg)
+        } else emptyList()
     }
 }

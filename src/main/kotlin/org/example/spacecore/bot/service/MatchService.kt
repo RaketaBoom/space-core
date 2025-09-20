@@ -13,7 +13,7 @@ class MatchService(
     private val profileService: ProfileService
 ) {
 
-    fun createLikeNotification(likerProfile: Profile, likedUserTelegramId: Long): SendMessage {
+    fun createLikeNotification(likerProfile: Profile, likedUserTelegramId: Long): List<SendMessage> {
         val messageText = """
             ❤️ Ваша анкета понравилась пользователю!
             
@@ -30,10 +30,16 @@ class MatchService(
                 }
             )
         )
-
-        return SendMessage(likedUserTelegramId.toString(), messageText).apply {
+        val message = SendMessage(likedUserTelegramId.toString(), messageText).apply {
             replyMarkup = InlineKeyboardMarkup.builder().keyboard(keyboard).build()
         }
+
+        val myMessageText = """
+            ❤️ Ваша симпатия отправлена!
+        """.trimIndent()
+        val myMessage = SendMessage(likerProfile.telegramId.toString(), myMessageText)
+
+        return listOf(message, myMessage)
     }
 
     fun createMatchNotification(user1Id: Long, user2Id: Long): List<SendMessage> {
@@ -53,14 +59,14 @@ class MatchService(
             🎉 Взаимная симпатия!
             
             Вы понравились пользователю @${user2Profile.username ?: "пользователю"}!
-            Вот контакт: @${user2Profile.username ?: "напишите в личные сообщения"}
+            Хорошо вам пообщаться!
         """.trimIndent()
 
         val messageToUser2 = """
             🎉 Взаимная симпатия!
             
             Вы понравились пользователю @${user1Profile.username ?: "пользователю"}!
-            Вот контакт: @${user1Profile.username ?: "напишите в личные сообщения"}
+            Хорошо вам пообщаться!
         """.trimIndent()
 
         return listOf(

@@ -10,6 +10,8 @@ import org.example.spacecore.bot.model.Vibe
 import org.example.spacecore.bot.service.MatchService
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
+import org.example.spacecore.bot.text.FormText
+import org.example.spacecore.bot.text.MenuText
 import org.example.spacecore.bot.util.MessageUtil
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
@@ -32,31 +34,26 @@ class CallbackHandler(
         val messageDto = createMessageDto(callbackQuery)
 
         return when {
-            messageDto.data.startsWith("gender_") -> handleGenderSelection(messageDto, telegramClient)
+            messageDto.data.startsWith("gender_") -> handleGender(messageDto, telegramClient)
             messageDto.data.startsWith("looking_") -> handleLookingForSelection(messageDto, telegramClient)
             messageDto.data.startsWith("vibe_") -> handleVibeSelection(messageDto, telegramClient)
             messageDto.data.startsWith("like_") -> handleLike(messageDto, telegramClient)
             messageDto.data.startsWith("dislike_") -> handleDislike(messageDto, telegramClient)
             messageDto.data.startsWith("match_") -> handleMatch(messageDto, telegramClient)
             messageDto.data == "profiles" -> handleProfiles(messageDto, telegramClient)
+            messageDto.data == "my_profile" -> handleMyProfile(messageDto, telegramClient)
             messageDto.data == "menu" -> handleMenu(messageDto, telegramClient)
             else -> listOf(createSendMessage(messageDto, "Неизвестная команда"))
         }
     }
 
-    private fun handleGenderSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+    private fun handleGender(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         val gender = Gender.fromString(msg.data.removePrefix("gender_"))
         profileService.updateGender(msg.userId, gender)
         userStateService.updateState(msg.userId, UserState.SELECTING_LOOKING_FOR)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
-        val message = SendMessage.builder()
-            .chatId(msg.chatId.toString())
-            .text("Кого вы ищете?")
-            .replyMarkup(Keyboard.lookingFor())
-            .build()
-
-        return listOf(message)
+        return FormText.lookingFor(msg)
     }
 
     private fun handleLookingForSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
@@ -66,7 +63,7 @@ class CallbackHandler(
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(createSendMessage(msg, "Расскажите о себе:"))
+        return FormText.description(msg)
     }
 
     private fun handleVibeSelection(msg: MessageDto, telegramClient: TelegramClient  ): List<SendMessage> {
@@ -91,13 +88,22 @@ class CallbackHandler(
         return getNextProfile(msg, telegramClient)
     }
 
+    private fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+
+        val profile = profileService.getOrCreateProfile(msg.userId)
+
+        return listOf(createProfileMessage(msg, profile, true))
+    }
+
     private fun handleMenu(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         userStateService.updateState(msg.userId, UserState.MENU)
         browsingQueue.remove(msg.userId)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(createSendMessage(msg, "Главное меню", Keyboard.menu()))
+        return MenuText.menu(msg)
     }
 
     private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
@@ -115,13 +121,13 @@ class CallbackHandler(
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(notification) + getNextProfile(msg, telegramClient)
+        return notification + getNextProfile(msg, telegramClient)
     }
 
     private fun handleMatch(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         val matchedUserId = msg.data.removePrefix("match_").toLong()
 
-        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
         return matchService.createMatchNotification(msg.userId, matchedUserId)
     }
 
@@ -139,7 +145,7 @@ class CallbackHandler(
         return if (nextProfile != null) {
             listOf(createProfileMessage(msg, nextProfile))
         } else {
-            listOf(createSendMessage(msg, "😔 Анкеты закончились. Попробуйте позже!"))
+            MenuText.formEnded(msg)
         }
     }
 

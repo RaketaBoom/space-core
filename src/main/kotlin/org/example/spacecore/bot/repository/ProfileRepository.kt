@@ -191,9 +191,6 @@ class ProfileRepository(
         """.trimIndent()
 
         jdbcTemplate.update(sql,
-            profile.username,
-            profile.firstName,
-            profile.lastName,
             profile.name,
             profile.age,
             profile.gender.name,

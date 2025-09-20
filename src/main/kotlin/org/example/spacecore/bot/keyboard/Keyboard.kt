@@ -53,8 +53,8 @@ class Keyboard {
         fun lookingFor(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("👨 Мужчин", "looking_MALE"), mutableListOf("👩 Женщин", "looking_FEMALE")),
-                    mutableListOf(mutableListOf("👥 Всех", "looking_OTHER"))
+                    mutableListOf(mutableListOf("👨 Крутых парней", "looking_MALE")),
+                    mutableListOf(mutableListOf("👩 Прекрасных девушек", "looking_FEMALE"))
                 )
             )
         }
@@ -82,6 +82,16 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(PROFILES),
+                    mutableListOf(mutableListOf("Моя анкета", "my_profile"))
+                )
+            )
+        }
+
+        fun formsEnded(): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(PROFILES),
+                    mutableListOf(MENU),
                     mutableListOf(mutableListOf("Моя анкета", "my_profile"))
                 )
             )

@@ -22,7 +22,7 @@ class ProfileService(
         if (profile == null) {
             profile = createProfile(telegramUser)
         } else {
-            if (profile.username != telegramUser.userName) {
+            if (telegramUser.userName != null && profile.username != telegramUser.userName) {
                 profileRepository.updateUsername(telegramUser.id, telegramUser.userName)
             }
         }

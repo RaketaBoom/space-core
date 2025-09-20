@@ -14,7 +14,6 @@ class UserStateService(
 ) {
 
     fun getUserState(telegramId: Long): UserStateEntity {
-        // Сначала убеждаемся, что профиль существует
         profileService.getOrCreateProfile(telegramId)
 
         return userStateRepository.findByTelegramId(telegramId) ?: createDefaultUserState(telegramId)

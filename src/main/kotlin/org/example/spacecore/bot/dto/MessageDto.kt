@@ -19,11 +19,11 @@ fun createMessageDto(callbackQuery: CallbackQuery): MessageDto {
         callbackQuery.message.chatId,
         callbackQuery.from.id,
         callbackQuery.message.messageId,
-        callbackQuery.data,
+        callbackQuery.data ?: "",
         "",
-        callbackQuery.from.userName,
+        callbackQuery.from.userName ?: "",
         callbackQuery.from.firstName,
-        callbackQuery.from.lastName
+        callbackQuery.from.lastName ?: ""
     )
 }
 
