@@ -1,10 +1,16 @@
 package org.example.spacecore.bot.handler
 
+import org.example.spacecore.bot.dto.MessageDto
+import org.example.spacecore.bot.dto.createMessageDto
+import org.example.spacecore.bot.keyboard.Keyboard
 import org.telegram.telegrambots.meta.api.objects.User
 import org.example.spacecore.bot.model.UserState
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
+import org.example.spacecore.bot.text.FormText
 import org.example.spacecore.bot.util.MessageUtil
+import org.example.spacecore.bot.util.createSendMessage
+import org.example.spacecore.bot.util.createUser
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -20,153 +26,86 @@ class MessageHandler(
     private val profileService: ProfileService,
     private val userStateService: UserStateService
 ) {
-    private val userStates = ConcurrentHashMap<Long, UserState>()
-    private val userTempData = ConcurrentHashMap<Long, MutableMap<String, Any>>()
 
     fun handleMessage(message: Message, telegramClient: TelegramClient): List<SendMessage> {
-        val chatId = message.chatId
-        val userId = message.from.id
-        val currentState = userStateService.getCurrentState(userId)
+        val messageDto = createMessageDto(message)
+        val currentState = userStateService.getCurrentState(messageDto.userId)
 
         return when {
-            message.hasText() -> handleTextMessage(message, currentState, userId, telegramClient)
-            message.hasPhoto() -> handlePhotoMessage(message, currentState, userId, telegramClient)
-            else -> listOf(createSendMessage(chatId.toString(), "Пожалуйста, используйте текстовые сообщения или фото"))
+            message.hasText() -> handleTextMessage(messageDto, currentState,  telegramClient)
+            message.hasPhoto() -> handlePhotoMessage(messageDto,message, currentState,  telegramClient)
+            else -> listOf(createSendMessage(messageDto, "Пожалуйста, используйте текстовые сообщения или фото"))
         }
     }
 
     private fun handleTextMessage(
-        message: Message,
+        msg: MessageDto,
         state: UserState,
-        userId: Long,
         telegramClient: TelegramClient
     ): List<SendMessage> {
-        val text = message.text
-        val chatId = message.chatId
-        val messageId = message.messageId
 
         return when (state) {
-            UserState.START -> handleStart(messageId, chatId, userId, telegramClient, message)
-            UserState.ENTERING_NAME -> handleName(messageId, chatId, userId, text, telegramClient, message)
-            UserState.ENTERING_AGE -> handleAge(messageId, chatId, userId, text, telegramClient)
-            UserState.ENTERING_DESCRIPTION -> handleDescription(messageId, chatId, userId, text, telegramClient)
-            else -> listOf(createSendMessage(chatId.toString(), "Неизвестная команда"))
+            UserState.START -> handleStart(msg, telegramClient)
+            UserState.ENTERING_NAME -> handleName(msg, telegramClient)
+            UserState.ENTERING_AGE -> handleAge(msg,   telegramClient)
+            UserState.ENTERING_DESCRIPTION -> handleDescription(msg,  telegramClient)
+            else -> listOf(createSendMessage(msg, "Неизвестная команда"))
         }
     }
 
-    private fun handleStart(messageId: Int, chatId: Long, userId: Long, telegramClient: TelegramClient, message: Message): List<SendMessage> {
-        val chat = message.chat
-        userStateService.updateState(userId, UserState.ENTERING_NAME)
-        profileService.updateUserName(userId,
-            User.builder().id(userId).isBot(false).firstName(chat.firstName).lastName(chat.firstName).userName(chat.userName).build()
-        )
+    private fun handleStart(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
+        profileService.updateUserName(msg.userId, createUser(msg))
 
-        MessageUtil.deleteMessage(chatId, messageId, telegramClient)
-        return listOf(createSendMessage(chatId.toString(), "Давайте создадим вашу анкету! Как вас зовут?"))
+        MessageUtil.deleteMessage(msg, telegramClient)
+        return FormText.start(msg)
     }
 
-    private fun handleName(messageId: Int, chatId: Long, userId: Long, name: String, telegramClient: TelegramClient, message: Message): List<SendMessage> {
-        profileService.updateName(userId, name)
-        userStateService.updateState(userId, UserState.ENTERING_AGE)
+    private fun handleName(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        profileService.updateName(msg.userId, msg.text)
+        userStateService.updateState(msg.userId, UserState.ENTERING_AGE)
 
-        MessageUtil.deleteMessage(chatId, messageId, telegramClient)
-        MessageUtil.deleteMessage(chatId, messageId - 1, telegramClient)
-        return listOf(createSendMessage(chatId.toString(), "Сколько вам лет?"))
+        MessageUtil.deleteMessage(msg, telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+        return FormText.name(msg)
     }
 
-    private fun handleAge(messageId: Int, chatId: Long, userId: Long, ageText: String, telegramClient: TelegramClient): List<SendMessage> {
-        val age = ageText.toIntOrNull()
+    private fun handleAge(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val age = msg.text.toIntOrNull()
         return if (age != null && age in 18..100) {
-            profileService.updateAge(userId, age)
-            userStateService.updateState(userId, UserState.SELECTING_GENDER)
+            profileService.updateAge(msg.userId, age)
+            userStateService.updateState(msg.userId, UserState.SELECTING_GENDER)
 
-            MessageUtil.deleteMessage(chatId, messageId, telegramClient)
-            MessageUtil.deleteMessage(chatId, messageId - 1, telegramClient)
-            val message = SendMessage.builder()
-                .chatId(chatId.toString())
-                .text("Выберите ваш пол:")
-                .replyMarkup(createGenderKeyboard())
-                .build()
+            MessageUtil.deleteMessage(msg, telegramClient)
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-            listOf(message)
+            listOf(createSendMessage(msg, "Выберите ваш пол:", Keyboard.genderKeyboard()))
         } else {
-            listOf(createSendMessage(chatId.toString(), "Пожалуйста, введите корректный возраст (18-100)"))
+            listOf(createSendMessage(msg, "Пожалуйста, введите корректный возраст (18-100)"))
         }
     }
 
-    private fun handleDescription(messageId: Int, chatId: Long, userId: Long, description: String, telegramClient: TelegramClient): List<SendMessage> {
-        profileService.updateDescription(userId, description)
-        userStateService.updateState(userId, UserState.UPLOADING_PHOTO)
+    private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        profileService.updateDescription(msg.userId, msg.text)
+        userStateService.updateState(msg.userId, UserState.UPLOADING_PHOTO)
 
-        MessageUtil.deleteMessage(chatId, messageId, telegramClient)
-        MessageUtil.deleteMessage(chatId, messageId - 1, telegramClient)
-        return listOf(createSendMessage(chatId.toString(), "Отправьте ваше фото:"))
+        MessageUtil.deleteMessage(msg, telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+        return listOf(createSendMessage(msg, "Отправьте ваше фото:"))
     }
 
-    private fun handlePhotoMessage(message: Message, state: UserState, userId: Long, telegramClient: TelegramClient): List<SendMessage> {
+    private fun handlePhotoMessage(msg: MessageDto,message: Message, state: UserState, telegramClient: TelegramClient): List<SendMessage> {
         if (state == UserState.UPLOADING_PHOTO) {
             val photo = message.photo.last()
             val messageId = message.messageId
-            profileService.updatePhoto(userId, photo.fileId)
-            userStateService.updateState(userId, UserState.SELECTING_VIBE)
+            profileService.updatePhoto(msg.userId, photo.fileId)
+            userStateService.updateState(msg.userId, UserState.SELECTING_VIBE)
 
-            MessageUtil.deleteMessage(userId, messageId, telegramClient)
-            MessageUtil.deleteMessage(userId, messageId - 1, telegramClient)
-            val sendMessage = SendMessage.builder()
-                .chatId(message.chatId.toString())
-                .text("Выберите ваш вайб (0-9):")
-                .replyMarkup(createVibeKeyboard())
-                .build()
+            MessageUtil.deleteMessage(msg, telegramClient)
+            MessageUtil.deleteMessage(msg.userId, messageId - 1, telegramClient)
 
-            return listOf(sendMessage)
+            return listOf(createSendMessage(msg, "Выберите ваш вайб (0-9):", Keyboard.vibeKeyboard()))
         }
         return emptyList()
-    }
-
-    private fun createSendMessage(chatId: String, text: String): SendMessage {
-        return SendMessage.builder()
-            .chatId(chatId)
-            .text(text)
-            .build()
-    }
-
-    private fun createGenderKeyboard(): InlineKeyboardMarkup {
-        val keyboard = listOf(
-            InlineKeyboardRow(
-                InlineKeyboardButton.builder()
-                    .text("👨 Мужской")
-                    .callbackData("gender_MALE")
-                    .build(),
-                InlineKeyboardButton.builder()
-                    .text("👩 Женский")
-                    .callbackData("gender_FEMALE")
-                    .build()
-            ),
-            InlineKeyboardRow(
-                InlineKeyboardButton.builder()
-                    .text("👥 Другой")
-                    .callbackData("gender_OTHER")
-                    .build()
-            )
-        )
-        return InlineKeyboardMarkup.builder().keyboard(keyboard).build()
-    }
-
-    private fun createVibeKeyboard(): InlineKeyboardMarkup {
-        val keyboard = listOf(
-            InlineKeyboardRow((0..4).map { vibeValue ->
-                InlineKeyboardButton.builder()
-                    .text("$vibeValue")
-                    .callbackData("vibe_$vibeValue")
-                    .build()
-            }),
-            InlineKeyboardRow((5..9).map { vibeValue ->
-                InlineKeyboardButton.builder()
-                    .text("$vibeValue")
-                    .callbackData("vibe_$vibeValue")
-                    .build()
-            })
-        )
-        return InlineKeyboardMarkup.builder().keyboard(keyboard).build()
     }
 }

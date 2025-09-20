@@ -1,27 +1,27 @@
 package org.example.spacecore.bot.util
 
+import org.example.spacecore.bot.dto.MessageDto
 import org.example.spacecore.bot.keyboard.Keyboard
 import org.example.spacecore.bot.model.Profile
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
 
-fun createSendMessage(chatId: Long, text: String, replyMarkup: InlineKeyboardMarkup? = null): SendMessage {
+fun createSendMessage(msg: MessageDto, text: String, replyMarkup: InlineKeyboardMarkup? = null): SendMessage {
     return when (replyMarkup) {
         null -> SendMessage.builder()
-            .chatId(chatId.toString())
+            .chatId(msg.chatId.toString())
             .text(text)
             .build()
         else -> SendMessage.builder()
-            .chatId(chatId.toString())
+            .chatId(msg.chatId.toString())
             .text(text)
             .replyMarkup(replyMarkup)
             .build()
     }
 }
 
-fun createProfileMessage(chatId: Long, profile: Profile, myProfile: Boolean = false): SendMessage {
+fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false): SendMessage {
     val messageText = """
             ${if (myProfile) "Ваша анкета:\n" else ""}
             👤 ${profile.name}, ${profile.age}
@@ -37,5 +37,9 @@ fun createProfileMessage(chatId: Long, profile: Profile, myProfile: Boolean = fa
         true -> Keyboard.myProfile()
     }
 
-    return createSendMessage(chatId, messageText, keyboard)
+    return createSendMessage(msg, messageText, keyboard)
+}
+
+fun createUser(msg: MessageDto): User {
+    return User.builder().id(msg.userId).userName(msg.userName).firstName(msg.firstName).lastName(msg.lastName).isBot(false).build()
 }

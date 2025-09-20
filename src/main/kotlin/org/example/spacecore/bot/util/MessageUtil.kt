@@ -1,5 +1,6 @@
 package org.example.spacecore.bot.util
 
+import org.example.spacecore.bot.dto.MessageDto
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
 import org.telegram.telegrambots.meta.generics.TelegramClient
@@ -19,23 +20,13 @@ class MessageUtil {
             }
         }
 
+        fun deleteMessage(msg: MessageDto, telegramClient: TelegramClient) {
+            deleteMessage(msg.chatId, msg.messageId, telegramClient)
+        }
+
         fun deleteMultipleMessages(chatId: Long, messageIds: MutableList<Int>, telegramClient: TelegramClient) {
             for (messageId in messageIds) {
-                try {
-                    val deleteMessage: DeleteMessage? = DeleteMessage.builder()
-                        .chatId(chatId.toString())
-                        .messageId(messageId)
-                        .build()
-
-                    telegramClient.execute(deleteMessage)
-                    Thread.sleep(100) // Небольшая задержка между запросами
-                } catch (e: TelegramApiException) {
-                    System.err.println("Error deleting message " + messageId + ": " + e.message)
-                    Thread.currentThread().interrupt()
-                } catch (e: InterruptedException) {
-                    System.err.println("Error deleting message " + messageId + ": " + e.message)
-                    Thread.currentThread().interrupt()
-                }
+                deleteMessage(chatId, messageId, telegramClient)
             }
         }
     }

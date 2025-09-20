@@ -9,6 +9,7 @@ import org.telegram.telegrambots.longpolling.starter.SpringLongPollingBot
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer
 import org.telegram.telegrambots.meta.generics.TelegramClient
 import org.example.spacecore.bot.handler.MessageHandler
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.objects.Update
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException
@@ -20,13 +21,16 @@ private val callbackHandler: CallbackHandler
 ) : SpringLongPollingBot, LongPollingSingleThreadUpdateConsumer {
     private val telegramClient: TelegramClient
 
+    @Value("\${telegram.bot.token}")
+    val token= ""
+
 
     init {
         telegramClient = OkHttpTelegramClient(getBotToken())
     }
 
     override fun getBotToken(): String {
-        return "Token"
+        return token
     }
 
     override fun getUpdatesConsumer(): LongPollingUpdateConsumer {

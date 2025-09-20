@@ -1,5 +1,7 @@
 package org.example.spacecore.bot.handler
 
+import org.example.spacecore.bot.dto.MessageDto
+import org.example.spacecore.bot.dto.createMessageDto
 import org.example.spacecore.bot.keyboard.Keyboard
 import org.example.spacecore.bot.model.Gender
 import org.example.spacecore.bot.model.Profile
@@ -16,7 +18,7 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 import java.util.concurrent.ConcurrentHashMap
 import org.example.spacecore.bot.util.createProfileMessage
 import org.example.spacecore.bot.util.createSendMessage
-import org.telegram.telegrambots.meta.api.objects.User
+import org.example.spacecore.bot.util.createUser
 
 @Component
 class CallbackHandler(
@@ -27,38 +29,29 @@ class CallbackHandler(
     private val browsingQueue = ConcurrentHashMap<Long, MutableList<Profile>>()
 
     fun handleCallback(callbackQuery: CallbackQuery, telegramClient: TelegramClient): List<SendMessage> {
-        val data = callbackQuery.data
-        val userId = callbackQuery.from.id
-        val chatId = callbackQuery.message.chatId
-        val messageId = callbackQuery.message.messageId
+        val messageDto = createMessageDto(callbackQuery)
 
         return when {
-            data.startsWith("gender_") -> handleGenderSelection(messageId, userId, chatId, data, telegramClient)
-            data.startsWith("looking_") -> handleLookingForSelection(messageId,userId, chatId, data, telegramClient)
-            data.startsWith("vibe_") -> handleVibeSelection(messageId,userId, chatId, data, telegramClient)
-            data.startsWith("like_") -> handleLike(messageId,userId,chatId,  data, telegramClient)
-            data.startsWith("dislike_") -> handleDislike(messageId,userId,chatId, telegramClient)
-            data.startsWith("match_") -> handleMatch(messageId,userId,chatId,  data, telegramClient)
-            data == "profiles" -> handleProfiles(messageId,userId, chatId, data, telegramClient)
-            data == "menu" -> handleMenu(messageId,userId, chatId, telegramClient)
-            else -> listOf(createSendMessage(chatId, "Неизвестная команда"))
+            messageDto.data.startsWith("gender_") -> handleGenderSelection(messageDto, telegramClient)
+            messageDto.data.startsWith("looking_") -> handleLookingForSelection(messageDto, telegramClient)
+            messageDto.data.startsWith("vibe_") -> handleVibeSelection(messageDto, telegramClient)
+            messageDto.data.startsWith("like_") -> handleLike(messageDto, telegramClient)
+            messageDto.data.startsWith("dislike_") -> handleDislike(messageDto, telegramClient)
+            messageDto.data.startsWith("match_") -> handleMatch(messageDto, telegramClient)
+            messageDto.data == "profiles" -> handleProfiles(messageDto, telegramClient)
+            messageDto.data == "menu" -> handleMenu(messageDto, telegramClient)
+            else -> listOf(createSendMessage(messageDto, "Неизвестная команда"))
         }
     }
 
-    private fun handleGenderSelection(
-        messageId: Int,
-        userId: Long,
-        chatId: Long,
-        data: String,
-        telegramClient: TelegramClient
-    ): List<SendMessage> {
-        val gender = Gender.fromString(data.removePrefix("gender_"))
-        profileService.updateGender(userId, gender)
-        userStateService.updateState(userId, UserState.SELECTING_LOOKING_FOR)
+    private fun handleGenderSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val gender = Gender.fromString(msg.data.removePrefix("gender_"))
+        profileService.updateGender(msg.userId, gender)
+        userStateService.updateState(msg.userId, UserState.SELECTING_LOOKING_FOR)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
         val message = SendMessage.builder()
-            .chatId(chatId.toString())
+            .chatId(msg.chatId.toString())
             .text("Кого вы ищете?")
             .replyMarkup(Keyboard.lookingFor())
             .build()
@@ -66,121 +59,92 @@ class CallbackHandler(
         return listOf(message)
     }
 
-    private fun handleLookingForSelection(
-        messageId: Int,
-        userId: Long,
-        chatId: Long,
-        data: String,
-        telegramClient: TelegramClient
-    ): List<SendMessage> {
-        val lookingFor = Gender.fromString(data.removePrefix("looking_"))
-        profileService.updateLookingFor(userId, lookingFor)
-        userStateService.updateState(userId, UserState.ENTERING_DESCRIPTION)
+    private fun handleLookingForSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val lookingFor = Gender.fromString(msg.data.removePrefix("looking_"))
+        profileService.updateLookingFor(msg.userId, lookingFor)
+        userStateService.updateState(msg.userId, UserState.ENTERING_DESCRIPTION)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(createSendMessage(chatId, "Расскажите о себе:"))
+        return listOf(createSendMessage(msg, "Расскажите о себе:"))
     }
 
-    private fun handleVibeSelection(
-        messageId: Int,
-        userId: Long,
-        chatId: Long,
-        data: String,
-        telegramClient: TelegramClient
-    ): List<SendMessage> {
-        val vibeValue = data.removePrefix("vibe_").toInt()
+    private fun handleVibeSelection(msg: MessageDto, telegramClient: TelegramClient  ): List<SendMessage> {
+        val vibeValue = msg.data.removePrefix("vibe_").toInt()
         val vibe = Vibe.fromInt(vibeValue)
-        profileService.updateVibe(userId, vibe)
-        profileService.updateActivityStatus(userId, true)
-        userStateService.updateState(userId, UserState.MY_PROFILE)
+        profileService.updateVibe(msg.userId, vibe)
+        profileService.updateActivityStatus(msg.userId, true)
+        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        val profile = profileService.getOrCreateProfile(userId)
+        val profile = profileService.getOrCreateProfile(msg.userId)
 
         // Загружаем анкеты для просмотра
-        loadProfilesForBrowsing(userId, profile)
+        loadProfilesForBrowsing(msg, profile)
 
-        return listOf(createProfileMessage(chatId, profile, true))
+        return listOf(createProfileMessage(msg, profile, true))
     }
 
-    private fun handleDislike(
-        messageId: Int,
-        userId: Long,
-        chatId: Long,
-        telegramClient: TelegramClient
-    ): List<SendMessage> {
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
-        return getNextProfile(userId, chatId, telegramClient)
+    private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return getNextProfile(msg, telegramClient)
     }
 
-    private fun handleMenu(
-        messageId: Int,
-        userId: Long,
-        chatId: Long,
-        telegramClient: TelegramClient
-    ): List<SendMessage> {
-        userStateService.updateState(userId, UserState.MENU)
-        browsingQueue.remove(userId)
+    private fun handleMenu(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.MENU)
+        browsingQueue.remove(msg.userId)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(createSendMessage(chatId, "Главное меню", Keyboard.menu()))
+        return listOf(createSendMessage(msg, "Главное меню", Keyboard.menu()))
     }
 
-    private fun handleProfiles(messageId: Int, userId: Long, chatId: Long, data: String, telegramClient: TelegramClient): List<SendMessage> {
-        userStateService.updateState(userId, UserState.BROWSING_PROFILES)
+    private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.BROWSING_PROFILES)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
-        return getNextProfile(userId, userId, telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return getNextProfile(msg, telegramClient)
     }
 
-    private fun handleLike(messageId: Int, userId: Long, chatId: Long,  data: String, telegramClient: TelegramClient): List<SendMessage> {
-        val likedUserId = data.removePrefix("like_").toLong()
-        val userProfile = profileService.getOrCreateProfile(userId )
+    private fun handleLike(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val likedUserId = msg.data.removePrefix("like_").toLong()
+        val userProfile = profileService.getOrCreateProfile(msg.userId )
 
         val notification = matchService.createLikeNotification(userProfile, likedUserId)
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
 
-        return listOf(notification) + getNextProfile(userId, telegramClient)
+        return listOf(notification) + getNextProfile(msg, telegramClient)
     }
 
-    private fun handleMatch(messageId: Int, userId: Long, chatId: Long,  data: String, telegramClient: TelegramClient): List<SendMessage> {
-        val matchedUserId = data.removePrefix("match_").toLong()
+    private fun handleMatch(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val matchedUserId = msg.data.removePrefix("match_").toLong()
 
-        MessageUtil.deleteMessage(chatId, messageId,telegramClient)
-        return matchService.createMatchNotification(userId, matchedUserId)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return matchService.createMatchNotification(msg.userId, matchedUserId)
     }
 
-
-
-    private fun getNextProfile(userId: Long, telegramClient: TelegramClient): List<SendMessage> {
-        val chatId = userId // Используем userId как chatId для упрощения
-        return getNextProfile(userId, chatId, telegramClient)
-    }
-
-    private fun getNextProfile(userId: Long, chatId: Long, telegramClient: TelegramClient): List<SendMessage> {
-        val queue = browsingQueue[userId] ?: mutableListOf()
+    private fun getNextProfile(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        val queue = browsingQueue[msg.userId] ?: mutableListOf()
 
         if (queue.isEmpty()) {
             // Загружаем еще анкет
-            val userProfile = profileService.getOrCreateProfile(User(userId, "", false))
-            loadProfilesForBrowsing(userId, userProfile)
+            val userProfile = profileService.getOrCreateProfile(createUser(msg))
+            loadProfilesForBrowsing(msg, userProfile)
         }
 
-        val nextProfile = browsingQueue[userId]?.removeFirstOrNull()
+        val nextProfile = browsingQueue[msg.userId]?.removeFirstOrNull()
 
         return if (nextProfile != null) {
-            listOf(createProfileMessage(chatId, nextProfile))
+            listOf(createProfileMessage(msg, nextProfile))
         } else {
-            listOf(createSendMessage(chatId, "😔 Анкеты закончились. Попробуйте позже!"))
+            listOf(createSendMessage(msg, "😔 Анкеты закончились. Попробуйте позже!"))
         }
     }
 
-    private fun loadProfilesForBrowsing(userId: Long, userProfile: Profile) {
+    private fun loadProfilesForBrowsing(msg: MessageDto, userProfile: Profile) {
         val matchingProfiles = profileService.findMatchingProfiles(userProfile)
-        browsingQueue[userId] = matchingProfiles.toMutableList()
+        browsingQueue[msg.userId] = matchingProfiles.toMutableList()
     }
 }
