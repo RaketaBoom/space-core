@@ -1,26 +1,29 @@
 package org.example.spacecore.bot.service
 
 import org.example.spacecore.bot.model.Profile
+import org.example.spacecore.bot.util.createSendMessage
+import org.example.spacecore.bot.util.createSendPhoto
 import org.springframework.stereotype.Service
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow
+import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Service
 class MatchService(
     private val profileService: ProfileService
 ) {
 
-    fun createLikeNotification(likerProfile: Profile, likedUserTelegramId: Long): List<SendMessage> {
+    fun createLikeNotification(likerProfile: Profile, likedUserTelegramId: Long, telegramClient: TelegramClient): List<SendMessage> {
         val messageText = """
             ❤️ Ваша анкета понравилась пользователю!
             
             Имя: ${likerProfile.name}
             Возраст: ${likerProfile.age}
             Описание: ${likerProfile.description}
-            Вайб: ${likerProfile.vibe.value}
         """.trimIndent()
 
         val keyboard = listOf(
@@ -30,16 +33,14 @@ class MatchService(
                 }
             )
         )
-        val message = SendMessage(likedUserTelegramId.toString(), messageText).apply {
-            replyMarkup = InlineKeyboardMarkup.builder().keyboard(keyboard).build()
-        }
+        telegramClient.execute(createSendPhoto(likedUserTelegramId, likerProfile.photoId,messageText,InlineKeyboardMarkup.builder().keyboard(keyboard).build()))
 
         val myMessageText = """
             ❤️ Ваша симпатия отправлена!
         """.trimIndent()
         val myMessage = SendMessage(likerProfile.telegramId.toString(), myMessageText)
 
-        return listOf(message, myMessage)
+        return listOf(myMessage)
     }
 
     fun createMatchNotification(user1Id: Long, user2Id: Long): List<SendMessage> {

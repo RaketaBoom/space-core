@@ -35,7 +35,7 @@ class MessageHandler(
         return when {
             message.hasText() -> handleTextMessage(messageDto, currentState,  telegramClient)
             message.hasPhoto() -> handlePhotoMessage(messageDto,message, currentState,  telegramClient)
-            else -> listOf(createSendMessage(messageDto, "Пожалуйста, используйте текстовые сообщения или фото"))
+            else -> listOf()
         }
     }
 
@@ -50,7 +50,7 @@ class MessageHandler(
             UserState.ENTERING_NAME -> handleName(msg, telegramClient)
             UserState.ENTERING_AGE -> handleAge(msg,   telegramClient)
             UserState.ENTERING_DESCRIPTION -> handleDescription(msg,  telegramClient)
-            else -> listOf(createSendMessage(msg, "Неизвестная команда"))
+            else -> callbackHandler.handleMenu(msg, telegramClient)
         }
     }
 

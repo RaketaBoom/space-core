@@ -4,6 +4,8 @@ import org.example.spacecore.bot.dto.MessageDto
 import org.example.spacecore.bot.keyboard.Keyboard
 import org.example.spacecore.bot.model.Profile
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
+import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
 
@@ -21,23 +23,32 @@ fun createSendMessage(msg: MessageDto, text: String, replyMarkup: InlineKeyboard
     }
 }
 
-fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false): SendMessage {
+fun createSendPhoto(msg: MessageDto, photo_id: String, caption: String, replyMarkup: InlineKeyboardMarkup? = null): SendPhoto {
+    return SendPhoto.builder()
+            .chatId(msg.chatId.toString())
+            .photo(InputFile(photo_id))
+            .caption(caption)
+            .replyMarkup(replyMarkup)
+            .build()
+}
+fun createSendPhoto(chatId: Long, photo_id: String, caption: String, replyMarkup: InlineKeyboardMarkup? = null): SendPhoto {
+    return createSendPhoto(MessageDto(chatId, 0),photo_id,caption,replyMarkup)
+}
+
+fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false): SendPhoto {
     val messageText = """
             ${if (myProfile) "Ваша анкета:\n" else ""}
-            👤 ${profile.name}, ${profile.age}
-            ${profile.gender}
-            
-            📝 ${profile.description}
-            
-            💫 Вайб: ${profile.vibe.value}/9
+            ${profile.name}, ${profile.age}
+            ${profile.description}
         """.trimIndent()
+//    Вайб: ${profile.vibe.value}/
 
     val keyboard: InlineKeyboardMarkup = when(myProfile) {
         false -> Keyboard.profile(profile)
         true -> Keyboard.myProfile()
     }
 
-    return createSendMessage(msg, messageText, keyboard)
+    return createSendPhoto(msg, profile.photoId,messageText, keyboard)
 }
 
 fun createUser(msg: MessageDto): User {
