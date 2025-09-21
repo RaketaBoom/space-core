@@ -10,6 +10,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.time.LocalDateTime
+import kotlin.math.floor
 
 @Repository
 class ProfileRepository(
@@ -210,16 +211,21 @@ class ProfileRepository(
         return profile
     }
 
-    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long): List<Profile> {
+    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0): List<Profile> {
+        val minAge = age - floor((level / 2).toDouble())
+        val maxAge = age + floor((level / 2).toDouble())
+        val minVibe = vibe - level
+        val maxVibe = vibe + level
         val sql = """
             SELECT * FROM profiles 
             WHERE is_active = true 
-            AND gender = ? 
+            AND gender = ?
             AND telegram_id != ?
-            ORDER BY ABS(age - ?) ASC, ABS(vibe - ?) ASC
-            LIMIT 100
+			AND age between ? and ?
+			AND vibe between ? and ?
+            LIMIT 50
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, profileRowMapper, lookingFor.name, excludeTelegramId, age, vibe)
+        return jdbcTemplate.query(sql, profileRowMapper, lookingFor.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
     }
 }

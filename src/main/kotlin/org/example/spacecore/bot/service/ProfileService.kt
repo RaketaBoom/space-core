@@ -104,12 +104,13 @@ class ProfileService(
         return profileRepository.save(profile)
     }
 
-    fun findMatchingProfiles(currentProfile: Profile): List<Profile> {
+    fun findMatchingProfiles(currentProfile: Profile, level: Int = 0): List<Profile> {
         return profileRepository.findMatchingProfiles(
             age = currentProfile.age,
             vibe = currentProfile.vibe.value,
             lookingFor = currentProfile.lookingFor,
-            excludeTelegramId = currentProfile.telegramId
+            excludeTelegramId = currentProfile.telegramId,
+            level = level
         )
     }
 

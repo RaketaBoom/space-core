@@ -40,8 +40,8 @@ fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean =
             ${if (myProfile) "Ваша анкета:\n" else ""}
             ${profile.name}, ${profile.age}
             ${profile.description}
+            Вайб: ${profile.vibe.value}  Убрать потом
         """.trimIndent()
-//    Вайб: ${profile.vibe.value}/
 
     val keyboard: InlineKeyboardMarkup = when(myProfile) {
         false -> Keyboard.profile(profile)

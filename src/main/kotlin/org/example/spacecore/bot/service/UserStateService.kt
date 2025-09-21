@@ -5,6 +5,7 @@ import org.example.spacecore.bot.model.UserStateEntity
 import org.example.spacecore.bot.repository.UserStateRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.security.Key
 
 @Service
 @Transactional
@@ -49,8 +50,10 @@ class UserStateService(
         }
     }
 
-    fun updateStateAndData(telegramId: Long, newState: UserState, tempData: Map<String, Any>): UserStateEntity {
+    fun updateStateAndData(telegramId: Long, newState: UserState, key: String, value: Any): UserStateEntity {
         val currentState = getUserState(telegramId)
+        val tempData = currentState.tempData.toMutableMap()
+        tempData[key] = value
 
         return if (currentState.id == 0L) {
             val newEntity = currentState.copy(state = newState, tempData = tempData)
