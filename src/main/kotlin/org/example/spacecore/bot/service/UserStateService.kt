@@ -5,7 +5,6 @@ import org.example.spacecore.bot.model.UserStateEntity
 import org.example.spacecore.bot.repository.UserStateRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.security.Key
 
 @Service
 @Transactional

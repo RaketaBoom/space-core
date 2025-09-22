@@ -211,21 +211,21 @@ class ProfileRepository(
         return profile
     }
 
-    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0): List<Profile> {
-        val minAge = age - floor((level / 2).toDouble())
-        val maxAge = age + floor((level / 2).toDouble())
+    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0): List<Long> {
+        val minAge = age - level + 1
+        val maxAge = age + level + 1
         val minVibe = vibe - level
         val maxVibe = vibe + level
         val sql = """
-            SELECT * FROM profiles 
+            SELECT id FROM profiles 
             WHERE is_active = true 
             AND gender = ?
             AND telegram_id != ?
 			AND age between ? and ?
-			AND vibe between ? and ?
-            LIMIT 50
+			AND vibe IN (?, ?)
+            ORDER BY RANDOM()
         """.trimIndent()
 
-        return jdbcTemplate.query(sql, profileRowMapper, lookingFor.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
+        return jdbcTemplate.queryForList(sql, Long::class.java, lookingFor.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
     }
 }

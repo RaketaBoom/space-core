@@ -104,7 +104,7 @@ class ProfileService(
         return profileRepository.save(profile)
     }
 
-    fun findMatchingProfiles(currentProfile: Profile, level: Int = 0): List<Profile> {
+    fun findMatchingProfiles(currentProfile: Profile, level: Int = 0): List<Long> {
         return profileRepository.findMatchingProfiles(
             age = currentProfile.age,
             vibe = currentProfile.vibe.value,
@@ -140,6 +140,11 @@ class ProfileService(
     fun getTelegramId(id: Long): Long {
         val profile = profileRepository.findById(id)
         return profile?.telegramId ?: 0
+    }
+
+    fun getById(id: Long): Profile? {
+        val profile = profileRepository.findById(id)
+        return profile
     }
 
     data class UserInfo(

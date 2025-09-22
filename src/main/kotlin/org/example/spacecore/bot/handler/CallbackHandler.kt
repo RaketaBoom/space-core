@@ -11,6 +11,7 @@ import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.FormText
 import org.example.spacecore.bot.text.MenuText
+import org.example.spacecore.bot.util.AddUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.TimedCacheMap
 import org.springframework.stereotype.Component
@@ -27,7 +28,7 @@ class CallbackHandler(
     private val matchService: MatchService,
     private val userStateService: UserStateService
 ) {
-    private val browsingQueue = TimedCacheMap()
+    private val browsingQueue = TimedCacheMap(userStateService)
 
     fun handleCallback(callbackQuery: CallbackQuery, telegramClient: TelegramClient): List<BotApiMethodMessage> {
         val messageDto = createMessageDto(callbackQuery)
@@ -98,12 +99,13 @@ class CallbackHandler(
     }
 
     private fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
-        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
-        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+//        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
+//        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+//
+//        val profile = profileService.getOrCreateProfile(msg.userId)
+//        telegramClient.execute(createProfileMessage(msg, profile, true))
 
-        val profile = profileService.getOrCreateProfile(msg.userId)
-        telegramClient.execute(createProfileMessage(msg, profile, true))
-
+        AddUtil.generateAngels(profileService)
         return listOf()
     }
 
@@ -215,12 +217,17 @@ class CallbackHandler(
             loadProfilesForBrowsing(msg, userProfile)
         }
 
-        if (next)
+        if (next) {
             browsingQueue[msg.userId]?.removeFirstOrNull()
-        val nextProfile = browsingQueue[msg.userId]?.firstOrNull()
-        if (nextProfile != null) {
-            userStateService.putTempData(msg.userId, "profileId", nextProfile.id)
-            telegramClient.execute(createProfileMessage(msg, nextProfile))
+//            browsingQueue.refreshTimer(msg.userId)
+        }
+        val nextProfileId = browsingQueue[msg.userId]?.firstOrNull()
+        if (nextProfileId != null) {
+            val nextProfile = profileService.getById(nextProfileId)
+            if (nextProfile != null) {
+                userStateService.putTempData(msg.userId, "profileId", nextProfileId)
+                telegramClient.execute(createProfileMessage(msg, nextProfile))
+            }
         } else {
             MenuText.formEnded(msg).forEach { response ->
                 telegramClient.execute(response)
@@ -229,10 +236,16 @@ class CallbackHandler(
     }
 
     private fun loadProfilesForBrowsing(msg: MessageDto, userProfile: Profile) {
+        var count = 0
         var level = (userStateService.getTempData(msg.userId)["level"] as String?)?.toInt() ?: -1
-        var matchingProfiles = listOf<Profile>()
+        var matchingProfiles = listOf<Long>()
         while (matchingProfiles.size < 15){
+            count += 1
+            if (count == 10)
+                break
             level += 1
+            if (level == 10)
+                level = 0
             matchingProfiles = matchingProfiles + profileService.findMatchingProfiles(userProfile, level)
         }
         userStateService.putTempData(msg.userId,"level", level)
