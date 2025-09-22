@@ -5,7 +5,7 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/spacecore_db
-    username: ${POSTGRES_USER}
+    username: ${POSTGRES_USERNAME}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
@@ -21,8 +21,9 @@ spring:
       default-schema: public
       drop-first: false
 
-bot:
-  token: ${BOT_TOKEN}
+telegram:
+  bot:
+    token: ${BOT_TOKEN}
 
 server:
   port: 8080
