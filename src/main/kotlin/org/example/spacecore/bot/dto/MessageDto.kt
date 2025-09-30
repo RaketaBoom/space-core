@@ -12,10 +12,8 @@ data class MessageDto(
     val userName: String = "",
     val firstName: String = "",
     val lastName: String = ""
-)
-
-fun createMessageDto(callbackQuery: CallbackQuery): MessageDto {
-    return MessageDto(
+) {
+    constructor(callbackQuery: CallbackQuery) : this(
         callbackQuery.message.chatId,
         callbackQuery.from.id,
         callbackQuery.message.messageId,
@@ -25,10 +23,8 @@ fun createMessageDto(callbackQuery: CallbackQuery): MessageDto {
         callbackQuery.from.firstName,
         callbackQuery.from.lastName ?: ""
     )
-}
 
-fun createMessageDto(message: Message): MessageDto {
-    return MessageDto(
+    constructor(message: Message) : this(
         message.chatId,
         message.from.id,
         message.messageId,

@@ -23,6 +23,10 @@ fun createSendMessage(msg: MessageDto, text: String, replyMarkup: InlineKeyboard
     }
 }
 
+fun createSendMessage(chatId: Long, text: String, replyMarkup: InlineKeyboardMarkup? = null): SendMessage {
+    return createSendMessage(MessageDto(chatId, 0), text,replyMarkup)
+}
+
 fun createSendPhoto(msg: MessageDto, photo_id: String, caption: String, replyMarkup: InlineKeyboardMarkup? = null): SendPhoto {
     return SendPhoto.builder()
             .chatId(msg.chatId.toString())
@@ -33,6 +37,10 @@ fun createSendPhoto(msg: MessageDto, photo_id: String, caption: String, replyMar
 }
 fun createSendPhoto(chatId: Long, photo_id: String, caption: String, replyMarkup: InlineKeyboardMarkup? = null): SendPhoto {
     return createSendPhoto(MessageDto(chatId, 0),photo_id,caption,replyMarkup)
+}
+
+fun createProfileMessage(chatId: Long, profile: Profile, myProfile: Boolean = false): SendPhoto {
+    return createProfileMessage(MessageDto(chatId, chatId), profile, myProfile)
 }
 
 fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false): SendPhoto {

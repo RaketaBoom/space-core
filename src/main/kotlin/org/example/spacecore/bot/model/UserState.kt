@@ -9,8 +9,14 @@ enum class UserState {
     ENTERING_DESCRIPTION,
     UPLOADING_PHOTO,
     SELECTING_VIBE,
+
     BROWSING_PROFILES,
     MY_PROFILE,
     VIEWING_MATCHES,
     MENU,
+
+    REPORT,
+
+    //Admin states
+    REPLY_REPORT
 }

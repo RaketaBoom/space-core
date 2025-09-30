@@ -1,11 +1,13 @@
 package org.example.spacecore.bot.handler
 
 import org.example.spacecore.bot.dto.MessageDto
-import org.example.spacecore.bot.dto.createMessageDto
 import org.example.spacecore.bot.model.UserState
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
+import org.example.spacecore.bot.text.AdminText
 import org.example.spacecore.bot.text.FormText
+import org.example.spacecore.bot.text.MenuText
+import org.example.spacecore.bot.text.ReportText
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createUser
 import org.springframework.stereotype.Component
@@ -22,12 +24,12 @@ class MessageHandler(
 ) {
 
     fun handleMessage(message: Message, telegramClient: TelegramClient): List<SendMessage> {
-        val messageDto = createMessageDto(message)
+        val messageDto = MessageDto(message)
         val currentState = userStateService.getCurrentState(messageDto.userId)
 
         return when {
-            message.hasText() -> handleTextMessage(messageDto, currentState,  telegramClient)
-            message.hasPhoto() -> handlePhotoMessage(messageDto,message, currentState,  telegramClient)
+            message.hasText() -> handleTextMessage(messageDto, currentState, telegramClient)
+            message.hasPhoto() -> handlePhotoMessage(messageDto, message, currentState, telegramClient)
             else -> listOf()
         }
     }
@@ -41,8 +43,10 @@ class MessageHandler(
         return when (state) {
             UserState.START -> handleStart(msg, telegramClient)
             UserState.ENTERING_NAME -> handleName(msg, telegramClient)
-            UserState.ENTERING_AGE -> handleAge(msg,   telegramClient)
-            UserState.ENTERING_DESCRIPTION -> handleDescription(msg,  telegramClient)
+            UserState.ENTERING_AGE -> handleAge(msg, telegramClient)
+            UserState.ENTERING_DESCRIPTION -> handleDescription(msg, telegramClient)
+            UserState.REPORT -> handleReportEnded(msg, telegramClient)
+            UserState.REPLY_REPORT -> handleReplyReport(msg, telegramClient)
             else -> callbackHandler.handleMenu(msg, telegramClient)
         }
     }
@@ -64,7 +68,7 @@ class MessageHandler(
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-        return callbackHandler.getMessageOrMyProfile(!editing,FormText.age(msg), msg, telegramClient)
+        return callbackHandler.getMessageOrMyProfile(!editing, FormText.age(msg), msg, telegramClient)
     }
 
     private fun handleAge(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
@@ -78,7 +82,7 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-            callbackHandler.getMessageOrMyProfile(!editing,FormText.gender(msg), msg, telegramClient)
+            callbackHandler.getMessageOrMyProfile(!editing, FormText.gender(msg), msg, telegramClient)
         } else {
             FormText.errorAge(msg)
         }
@@ -93,10 +97,15 @@ class MessageHandler(
         MessageUtil.deleteMessage(msg, telegramClient)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
 
-        return callbackHandler.getMessageOrMyProfile(!editing,FormText.photo(msg), msg, telegramClient)
+        return callbackHandler.getMessageOrMyProfile(!editing, FormText.photo(msg), msg, telegramClient)
     }
 
-    private fun handlePhotoMessage(msg: MessageDto,message: Message, state: UserState, telegramClient: TelegramClient): List<SendMessage> {
+    private fun handlePhotoMessage(
+        msg: MessageDto,
+        message: Message,
+        state: UserState,
+        telegramClient: TelegramClient
+    ): List<SendMessage> {
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         return if (state == UserState.UPLOADING_PHOTO) {
@@ -108,7 +117,26 @@ class MessageHandler(
             MessageUtil.deleteMessage(msg, telegramClient)
             MessageUtil.deleteMessage(msg.userId, messageId - 1, telegramClient)
 
-            callbackHandler.getMessageOrMyProfile(!editing,FormText.vibe(msg), msg, telegramClient)
+            callbackHandler.getMessageOrMyProfile(!editing, FormText.vibe(msg), msg, telegramClient)
         } else emptyList()
+    }
+
+    private fun handleReportEnded(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.MENU)
+
+        MessageUtil.deleteMessage(msg, telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+
+        return ReportText.reportEnded(msg) + AdminText.reportAdmin(msg, callbackHandler.adminId, msg.text) + MenuText.menu(msg)
+    }
+
+    //Admin
+
+    private fun handleReplyReport(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.MENU)
+
+        val reportedId = (userStateService.getTempData(msg.userId)["reported_id"] as String?)?.toLong() ?: -1
+
+        return AdminText.sendReportAdmin(reportedId, msg.text)
     }
 }

@@ -43,7 +43,7 @@ class ProfileRepository(
     }
 
     fun findById(id: Long): Profile? {
-        val sql = "SELECT * FROM profiles WHERE id = ?"
+        val sql = "SELECT * FROM profiles WHERE id = ? and is_active = True"
         return jdbcTemplate.query(sql, profileRowMapper, id).firstOrNull()
     }
 

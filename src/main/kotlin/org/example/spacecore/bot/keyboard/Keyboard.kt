@@ -50,11 +50,19 @@ class Keyboard {
             )
         }
 
+        fun back(): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Назад", "myProfile")),
+                )
+            )
+        }
+
         fun lookingFor(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("👨 Крутых парней", "looking_MALE")),
-                    mutableListOf(mutableListOf("👩 Прекрасных девушек", "looking_FEMALE"))
+                    mutableListOf(mutableListOf("👨 Крутых парней", "lookingFor_MALE")),
+                    mutableListOf(mutableListOf("👩 Прекрасных девушек", "lookingFor_FEMALE"))
                 )
             )
         }
@@ -63,6 +71,7 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(mutableListOf("❤️", "like_${profile.id}"), mutableListOf("👎","dislike_${profile.id}")),
+                    mutableListOf(mutableListOf("Пожаловаться", "reportBlock_${profile.id}")),
                     mutableListOf(MENU)
                 )
             )
@@ -71,11 +80,12 @@ class Keyboard {
         fun myProfile(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("Заполнить сначала", "edit"), mutableListOf("Сменить вайб", "change_vibe")),
-                    mutableListOf(mutableListOf("Имя", "change_name"), mutableListOf("Возраст", "change_age")),
-                    mutableListOf(mutableListOf("Фото", "change_photo"), mutableListOf("Описание", "change_description")),
+                    mutableListOf(mutableListOf("Заполнить сначала", "edit"), mutableListOf("Сменить вайб", "changeVibe")),
+                    mutableListOf(mutableListOf("Имя", "changeName"), mutableListOf("Возраст", "changeAge")),
+                    mutableListOf(mutableListOf("Фото", "changePhoto"), mutableListOf("Описание", "changeDescription")),
                     mutableListOf(MENU),
-                    mutableListOf(PROFILES)
+                    mutableListOf(PROFILES),
+                    mutableListOf(mutableListOf("Отключить анкету", "profileInactive")),
                 )
             )
         }
@@ -84,7 +94,8 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(PROFILES),
-                    mutableListOf(mutableListOf("Моя анкета", "my_profile"))
+                    mutableListOf(mutableListOf("Моя анкета", "myProfile")),
+                    mutableListOf(mutableListOf("Сообщить о проблеме", "report"))
                 )
             )
         }
@@ -94,7 +105,7 @@ class Keyboard {
                 mutableListOf(
                     mutableListOf(PROFILES),
                     mutableListOf(MENU),
-                    mutableListOf(mutableListOf("Моя анкета", "my_profile"))
+                    mutableListOf(mutableListOf("Моя анкета", "myProfile"))
                 )
             )
         }
@@ -103,6 +114,33 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(mutableListOf("Открыть анкету", "open_$profileId"))
+                )
+            )
+        }
+
+        fun report(): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Ответить", "report"))
+                )
+            )
+        }
+
+        //Пожаловаться
+        fun replyReport(userId: Long): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Ответить", "replyReport_$userId")),
+                    mutableListOf(MENU),
+                )
+            )
+        }
+
+        fun blockProfile(userId: Long?): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Заблокировать", "blockProfile_$userId")),
+                    mutableListOf(MENU),
                 )
             )
         }

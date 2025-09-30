@@ -42,10 +42,10 @@ class FormText {
             return createMessages(msg, "Расскажите о себе:")
         }
 
-        fun photo(msg: MessageDto): List<SendMessage>{
-            return createMessages(msg,
-                "Отправьте ваше фото:"
-            )
+        fun photo(msg: MessageDto, edit: Boolean = false): List<SendMessage>{
+            return listOf(createSendMessage(msg,
+                "Отправьте ваше фото:", if (edit) Keyboard.back() else null
+            ))
         }
 
         fun vibe(msg: MessageDto): List<SendMessage>{

@@ -39,7 +39,7 @@ class MessageUtil {
         }
 
 
-        fun editMessageForm(chatId: Long, messageId: Int,likedUserId: Long, telegramClient: TelegramClient) {
+        fun editMessageForm(chatId: Long, messageId: Int, likedUserId: Long, telegramClient: TelegramClient) {
             try {
                 val editMessage = EditMessageCaption.builder()
                     .chatId(chatId.toString())
