@@ -80,12 +80,23 @@ class Keyboard {
         fun myProfile(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
+                    mutableListOf(mutableListOf("✏\uFE0F Редактировать", "editing")),
+                    mutableListOf(MENU),
+                    mutableListOf(PROFILES),
+                    mutableListOf(mutableListOf("\uD83D\uDD12Отключить анкету", "profileInactive")),
+                )
+            )
+        }
+
+        fun editingProfile(): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
                     mutableListOf(mutableListOf("Заполнить сначала", "edit"), mutableListOf("Сменить вайб", "changeVibe")),
                     mutableListOf(mutableListOf("Имя", "changeName"), mutableListOf("Возраст", "changeAge")),
                     mutableListOf(mutableListOf("Фото", "changePhoto"), mutableListOf("Описание", "changeDescription")),
                     mutableListOf(MENU),
                     mutableListOf(PROFILES),
-                    mutableListOf(mutableListOf("Отключить анкету", "profileInactive")),
+                    mutableListOf(mutableListOf("\uD83D\uDD12 Отключить анкету", "profileInactive")),
                 )
             )
         }
@@ -122,6 +133,14 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(mutableListOf("Ответить", "report"))
+                )
+            )
+        }
+
+        fun inactive(): InlineKeyboardMarkup {
+            return createInlineKeyboard(
+                mutableListOf(
+                    mutableListOf(mutableListOf("Включить анкету", "active"))
                 )
             )
         }

@@ -1,6 +1,7 @@
 package org.example.spacecore.bot.model
 
 enum class UserState {
+    DISABLED,
     START,
     ENTERING_NAME,
     ENTERING_AGE,

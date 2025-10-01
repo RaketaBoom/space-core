@@ -11,10 +11,14 @@ class FormText {
         fun start(msg: MessageDto): List<SendMessage>{
             return createMessages(msg,
                 listOf(
-                    "Spacceee - чат бот для знакомств (сюда фото космоса)",
+                    "Spacceee - чат бот для знакомств",
                     "Давайте создадим вашу анкету! Как вас зовут?"
                 )
             )
+        }
+
+        fun nameError(msg: MessageDto): List<SendMessage>{
+            return createMessages(msg, "Пожалуйста, сократи текст до 50 символов")
         }
 
         fun age(msg: MessageDto): List<SendMessage>{
@@ -22,11 +26,12 @@ class FormText {
                 "Сколько вам лет?")
 
         }
-        fun errorAge(msg: MessageDto): List<SendMessage>{
+        fun ageError(msg: MessageDto): List<SendMessage>{
             return createMessages(msg,
                 "Пожалуйста, введите корректный возраст (18-100)"
             )
         }
+
 
         fun gender(msg: MessageDto): List<SendMessage>{
             return listOf(createSendMessage(msg, "Выберите ваш пол:", Keyboard.genderKeyboard()))
@@ -40,6 +45,10 @@ class FormText {
 
         fun description(msg: MessageDto): List<SendMessage>{
             return createMessages(msg, "Расскажите о себе:")
+        }
+
+        fun descriptionError(msg: MessageDto): List<SendMessage>{
+            return createMessages(msg, "Пожалуйста, сократи текст до 800 символов")
         }
 
         fun photo(msg: MessageDto, edit: Boolean = false): List<SendMessage>{

@@ -17,6 +17,7 @@ import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 import org.telegram.telegrambots.meta.generics.TelegramClient
 import org.example.spacecore.bot.util.createProfileMessage
 import org.example.spacecore.bot.util.createUser
+import org.example.spacecore.bot.util.profileMessageText
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 
 @Component
@@ -33,7 +34,11 @@ class CallbackHandler(
     fun handleCallback(callbackQuery: CallbackQuery, telegramClient: TelegramClient): List<BotApiMethodMessage> {
         val messageDto = MessageDto(callbackQuery)
 
-        val result = handlerService.executeCallback(messageDto.data, messageDto, telegramClient)
+        val result = if (userStateService.getCurrentState(messageDto.userId) == UserState.DISABLED){
+            handleActive(messageDto, telegramClient)
+        } else {
+            handlerService.executeCallback(messageDto.data, messageDto, telegramClient)
+        }
         return result as? List<BotApiMethodMessage> ?: listOf()
     }
 
@@ -77,7 +82,8 @@ class CallbackHandler(
         if (profileId == lastProfileId) {
             val userProfile = profileService.getOrCreateProfile(msg.userId)
 
-            MessageUtil.editMessageForm(msg.chatId, msg.messageId, likedUserId, telegramClient)
+            MessageUtil.deleteMessage(msg, telegramClient)
+//            MessageUtil.editMessageForm(msg.chatId, msg.messageId, likedUserId, telegramClient)
 
             matchService.sendLikeNotification(userProfile, likedUserId, telegramClient)
 
@@ -89,10 +95,9 @@ class CallbackHandler(
     @Callback("dislike_")
     private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
         val profileId = msg.data.removePrefix("dislike_").toLong()
-        val likedUserId = profileService.getTelegramId(profileId)
         val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
         if (profileId == lastProfileId) {
-            MessageUtil.editMessageForm(msg.chatId, msg.messageId, likedUserId, telegramClient)
+            MessageUtil.editMessageForm(msg.chatId, msg.messageId, profileId, telegramClient)
             getProfile(msg, telegramClient)
         }
         return listOf()
@@ -104,6 +109,29 @@ class CallbackHandler(
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
         return matchService.createMatchNotification(msg.userId, matchedUserId)
+    }
+
+    @Callback("open_")
+    private fun handleOpenForm(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        val profileId = msg.data.removePrefix("open_").toLong()
+        val profile = profileService.getById(profileId)
+        if (profile != null)
+            if (!MessageUtil.editOpenForm(msg.chatId, msg.messageId, profileMessageText(profile), profile, telegramClient)) {
+                getProfile(msg, telegramClient)
+            }
+
+        return listOf()
+    }
+
+    @Callback("active")
+     fun handleActive(msg: MessageDto, telegramClient: TelegramClient, twoDelete: Boolean = false): List<SendMessage> {
+        profileService.updateActivityStatus(msg.userId, true)
+        userStateService.updateState(msg.userId, UserState.MENU)
+
+        if (twoDelete)
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return MenuText.active(msg)
     }
 
     //Функции-утилиты
@@ -172,5 +200,9 @@ class CallbackHandler(
             telegramClient.execute(createProfileMessage(msg, profile, true))
             return listOf()
         }
+    }
+
+    fun isAdmin(userId: Long): Boolean {
+        return (userId == adminId)
     }
 }

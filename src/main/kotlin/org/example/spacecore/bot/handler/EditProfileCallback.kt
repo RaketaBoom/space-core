@@ -6,7 +6,9 @@ import org.example.spacecore.bot.model.UserState
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.FormText
+import org.example.spacecore.bot.text.MenuText
 import org.example.spacecore.bot.util.MessageUtil
+import org.example.spacecore.bot.util.createProfileMessage
 import org.example.spacecore.bot.util.createUser
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
@@ -16,10 +18,24 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 @Component
 class EditProfileCallback(
     private val userStateService: UserStateService,
-    private val profileService: ProfileService
+    private val profileService: ProfileService,
+    private val callbackHandler: CallbackHandler
 ) {
 
     //Редактирование профиля
+    @Callback("editing")
+    private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
+        if (!MessageUtil.editMessageProfile(msg.chatId, msg.messageId, telegramClient)) {
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
+
+            val profile = profileService.getOrCreateProfile(msg.userId)
+            telegramClient.execute(createProfileMessage(msg, profile, true, editing = true))
+        }
+
+        return listOf()
+    }
+
     @Callback("edit")
     private fun handleEdit(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
@@ -69,5 +85,14 @@ class EditProfileCallback(
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
         return FormText.description(msg)
+    }
+
+    @Callback("profileInactive")
+    private fun handleInactive(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        profileService.updateActivityStatus(msg.userId, false)
+        userStateService.updateState(msg.userId, UserState.DISABLED)
+
+        MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
+        return MenuText.inactive(msg)
     }
 }

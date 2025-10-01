@@ -20,5 +20,17 @@ class MenuText {
             )
         }
 
+        fun inactive(msg: MessageDto): List<SendMessage> {
+            return listOf(createSendMessage(msg,
+                "😔 Ваша анкета отключена.\nНо вы всегда можете ее включить!", Keyboard.inactive())
+            )
+        }
+
+        fun active(msg: MessageDto): List<SendMessage> {
+            return listOf(createSendMessage(msg,
+                "С возвращением!\nГлавное меню:", Keyboard.menu())
+            )
+        }
+
     }
 }

@@ -43,17 +43,21 @@ fun createProfileMessage(chatId: Long, profile: Profile, myProfile: Boolean = fa
     return createProfileMessage(MessageDto(chatId, chatId), profile, myProfile)
 }
 
-fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false): SendPhoto {
-    val messageText = """
-            ${if (myProfile) "Ваша анкета:\n" else ""}
+fun profileMessageText(profile: Profile): String{
+    return """
             ${profile.name}, ${profile.age}
             ${profile.description}
-            Вайб: ${profile.vibe.value}  Убрать потом
         """.trimIndent()
+}
+
+fun createProfileMessage(msg: MessageDto, profile: Profile, myProfile: Boolean = false, editing: Boolean = false): SendPhoto {
+    val messageText = """
+            ${if (myProfile) "Ваша анкета:\n" else ""}
+        """.trimIndent() + profileMessageText(profile)
 
     val keyboard: InlineKeyboardMarkup = when(myProfile) {
         false -> Keyboard.profile(profile)
-        true -> Keyboard.myProfile()
+        true -> if (!editing) Keyboard.myProfile() else Keyboard.editingProfile()
     }
 
     return createSendPhoto(msg, profile.photoId,messageText, keyboard)

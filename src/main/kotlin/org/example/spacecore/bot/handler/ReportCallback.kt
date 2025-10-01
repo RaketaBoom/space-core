@@ -15,7 +15,7 @@ import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMess
 import org.telegram.telegrambots.meta.generics.TelegramClient
 
 @Component
-class ReportCallback (
+class ReportCallback(
     private val userStateService: UserStateService,
     private val profileService: ProfileService,
     private val callbackHandler: CallbackHandler
@@ -36,7 +36,7 @@ class ReportCallback (
         callbackHandler.getProfile(msg, telegramClient)
 
         val profile = profileService.getOrCreateProfile(blockedTelegramId)
-        telegramClient.execute(createProfileMessage( callbackHandler.adminId, profile))
+        telegramClient.execute(createProfileMessage(callbackHandler.adminId, profile))
 
         return AdminText.blockProfileAdmin(msg, callbackHandler.adminId, profile.username, blockedId)
     }
@@ -44,22 +44,33 @@ class ReportCallback (
     //Admin
     @Callback("replyReport_")
     private fun handleReplyReport(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
-        val reportedId = msg.data.removePrefix("replyReport_").toLong()
-        userStateService.updateStateAndData(callbackHandler.adminId, UserState.REPLY_REPORT, "reported_id", reportedId)
+        if (callbackHandler.isAdmin(msg.userId)) {
+            val reportedId = msg.data.removePrefix("replyReport_").toLong()
+            userStateService.updateStateAndData(
+                callbackHandler.adminId,
+                UserState.REPLY_REPORT,
+                "reported_id",
+                reportedId
+            )
 
-        return AdminText.replyReport(msg)
+            return AdminText.replyReport(msg)
+        } else
+            return listOf()
     }
 
     @Callback("blockProfile_")
     private fun handleBlockProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
-        var blockedId = msg.data.removePrefix("blockProfile_").toLong()
-        blockedId = profileService.getTelegramId(blockedId)
+        if (callbackHandler.isAdmin(msg.userId)) {
+            var blockedId = msg.data.removePrefix("blockProfile_").toLong()
+            blockedId = profileService.getTelegramId(blockedId)
 
-        userStateService.updateState(blockedId, UserState.MENU)
-        profileService.updateActivityStatus(blockedId, false)
+            profileService.updateActivityStatus(blockedId, false)
+            userStateService.updateState(blockedId, UserState.DISABLED)
 
-        userStateService.updateState(msg.userId, UserState.MENU)
+            userStateService.updateState(msg.userId, UserState.MENU)
 
-        return ReportText.youBlocked(blockedId) + MenuText.menu(msg)
+            return ReportText.youBlocked(blockedId) + MenuText.menu(msg)
+        } else
+            return listOf()
     }
 }

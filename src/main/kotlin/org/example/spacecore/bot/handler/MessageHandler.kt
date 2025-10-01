@@ -47,6 +47,7 @@ class MessageHandler(
             UserState.ENTERING_DESCRIPTION -> handleDescription(msg, telegramClient)
             UserState.REPORT -> handleReportEnded(msg, telegramClient)
             UserState.REPLY_REPORT -> handleReplyReport(msg, telegramClient)
+            UserState.DISABLED -> callbackHandler.handleActive(msg, telegramClient, true)
             else -> callbackHandler.handleMenu(msg, telegramClient)
         }
     }
@@ -62,6 +63,11 @@ class MessageHandler(
     private fun handleName(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
+        if (msg.text.length > 50){
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+            MessageUtil.deleteMessage(msg, telegramClient)
+            return FormText.nameError(msg)
+        }
         profileService.updateName(msg.userId, msg.text)
         userStateService.updateState(msg.userId, UserState.ENTERING_AGE)
 
@@ -84,13 +90,17 @@ class MessageHandler(
 
             callbackHandler.getMessageOrMyProfile(!editing, FormText.gender(msg), msg, telegramClient)
         } else {
-            FormText.errorAge(msg)
+            FormText.ageError(msg)
         }
     }
 
     private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
+        if (msg.text.length > 800){
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId - 1, telegramClient)
+            return FormText.descriptionError(msg)
+        }
         profileService.updateDescription(msg.userId, msg.text)
         userStateService.updateState(msg.userId, UserState.UPLOADING_PHOTO)
 
