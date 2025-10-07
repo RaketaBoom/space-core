@@ -3,7 +3,9 @@ package org.example.spacecore.bot.text
 import org.example.spacecore.bot.dto.MessageDto
 import org.example.spacecore.bot.keyboard.Keyboard
 import org.example.spacecore.bot.util.createSendMessage
+import org.example.spacecore.bot.util.createSendPhoto
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 
 class FormText {
     companion object{
@@ -57,10 +59,9 @@ class FormText {
             ))
         }
 
-        fun vibe(msg: MessageDto): List<SendMessage>{
-            return listOf(createSendMessage(msg,
-                "Выберите ваш вайб (0-9):", Keyboard.vibeKeyboard())
-            )
+        fun vibe(msg: MessageDto): SendPhoto{
+            return createSendPhoto(msg, "AgACAgIAAxkBAAIGb2jkHNCmDAj5rvSydWsyGF27iIHhAAJl9TEbzM0pS0PE-MWGTwmxAQADAgADeQADNgQ",
+                    "Выберите ваш вайб (1-10):", Keyboard.vibeKeyboard())
         }
 
         //Редактирование профиля

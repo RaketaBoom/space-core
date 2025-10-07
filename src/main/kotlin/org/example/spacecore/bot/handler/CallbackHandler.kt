@@ -44,7 +44,7 @@ class CallbackHandler(
 
 
     @Callback("myProfile")
-    private fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+    fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
         userStateService.updateState(msg.userId, UserState.MY_PROFILE)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
 
@@ -75,7 +75,10 @@ class CallbackHandler(
 
     @Callback("like_")
     private fun handleLike(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
-        profileService.updateUserName(msg.userId, createUser(msg))
+        val checkUsername = checkAndEditUsername(msg)
+        if (checkUsername.isNotEmpty())
+            return checkUsername
+
         val profileId = msg.data.removePrefix("like_").toLong()
         val likedUserId = profileService.getTelegramId(profileId)
         val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
@@ -94,6 +97,10 @@ class CallbackHandler(
 
     @Callback("dislike_")
     private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        val checkUsername = checkAndEditUsername(msg)
+        if (checkUsername.isNotEmpty())
+            return checkUsername
+
         val profileId = msg.data.removePrefix("dislike_").toLong()
         val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
         if (profileId == lastProfileId) {
@@ -173,10 +180,10 @@ class CallbackHandler(
         var matchingProfiles = listOf<Long>()
         while (matchingProfiles.size < 15) {
             count += 1
-            if (count == 10)
+            if (count == 11)
                 break
             level += 1
-            if (level == 10)
+            if (level == 11)
                 level = 0
             matchingProfiles = matchingProfiles + profileService.findMatchingProfiles(userProfile, level)
         }
@@ -189,7 +196,7 @@ class CallbackHandler(
         message: List<SendMessage>,
         msg: MessageDto,
         telegramClient: TelegramClient
-    ): List<SendMessage> {
+    ): List<SendMessage>{
         if (bool) {
             return message
         } else {
@@ -199,6 +206,16 @@ class CallbackHandler(
             val profile = profileService.getOrCreateProfile(msg.userId)
             telegramClient.execute(createProfileMessage(msg, profile, true))
             return listOf()
+        }
+    }
+
+    fun checkAndEditUsername(msg: MessageDto): List<SendMessage>{
+        if (msg.userName != "") {
+            profileService.updateUserName(msg.userId, createUser(msg))
+            return emptyList()
+        } else {
+            userStateService.updateState(msg.userId, UserState.MENU)
+            return MenuText.errorUserName(msg)
         }
     }
 

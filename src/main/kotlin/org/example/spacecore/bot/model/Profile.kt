@@ -30,12 +30,12 @@ enum class Gender {
 }
 
 enum class Vibe(val value: Int) {
-    ZERO(0), ONE(1), TWO(2), THREE(3), FOUR(4),
-    FIVE(5), SIX(6), SEVEN(7), EIGHT(8), NINE(9);
+    ONE(1), TWO(2), THREE(3), FOUR(4),
+    FIVE(5), SIX(6), SEVEN(7), EIGHT(8), NINE(9), TEN(10), ;
 
     companion object {
         fun fromInt(value: Int): Vibe {
-            return values().find { it.value == value } ?: ZERO
+            return values().find { it.value == value } ?: ONE
         }
     }
 }

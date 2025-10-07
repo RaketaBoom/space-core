@@ -44,8 +44,8 @@ class Keyboard {
         fun vibeKeyboard(): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("0", "vibe_0"),mutableListOf("1", "vibe_1"),mutableListOf("2", "vibe_2"),mutableListOf("3", "vibe_3"), mutableListOf("4", "vibe_4")),
-                    mutableListOf(mutableListOf("5", "vibe_5"), mutableListOf("6", "vibe_6"),mutableListOf("7", "vibe_7"),mutableListOf("8", "vibe_8"),mutableListOf("9", "vibe_9")),
+                    mutableListOf(mutableListOf("1", "vibe_1"),mutableListOf("2", "vibe_2"),mutableListOf("3", "vibe_3"), mutableListOf("4", "vibe_4"), mutableListOf("5", "vibe_5"),),
+                    mutableListOf(mutableListOf("6", "vibe_6"),mutableListOf("7", "vibe_7"),mutableListOf("8", "vibe_8"),mutableListOf("9", "vibe_9"), mutableListOf("10", "vibe_10")),
                 )
             )
         }

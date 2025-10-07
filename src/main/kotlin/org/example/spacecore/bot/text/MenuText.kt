@@ -32,5 +32,10 @@ class MenuText {
             )
         }
 
+        fun errorUserName(msg: MessageDto): List<SendMessage> {
+            return listOf(createSendMessage(msg,
+                "Вам необходимо добавить Имя пользователя типа: @user4343, иначе мы не сможем отправлять ссылку на вас другим пользователям", Keyboard.menu())
+            )
+        }
     }
 }

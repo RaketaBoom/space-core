@@ -42,7 +42,7 @@ class ProfileService(
             lookingFor = Gender.OTHER,
             description = "",
             photoId = "",
-            vibe = Vibe.ZERO,
+            vibe = Vibe.ONE,
             isActive = false
         )
         //userStateService.resetUserState(telegramUser.id)

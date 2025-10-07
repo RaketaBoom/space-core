@@ -38,9 +38,11 @@ class EditProfileCallback(
 
     @Callback("edit")
     private fun handleEdit(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
-        userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
-        profileService.updateUserName(msg.userId, createUser(msg))
+        val checkUsername = callbackHandler.checkAndEditUsername(msg)
+        if (checkUsername.isNotEmpty())
+            return checkUsername
 
+        userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
         MessageUtil.deleteMessage(msg, telegramClient)
         return FormText.editProfile(msg)
     }
@@ -51,7 +53,8 @@ class EditProfileCallback(
 
         MessageUtil.deleteMessage(msg, telegramClient)
 
-        return FormText.vibe(msg)
+        telegramClient.execute(FormText.vibe(msg))
+        return emptyList()
     }
 
     @Callback("changeName")

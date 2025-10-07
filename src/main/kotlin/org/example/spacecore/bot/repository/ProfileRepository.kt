@@ -10,7 +10,6 @@ import org.springframework.jdbc.support.GeneratedKeyHolder
 import org.springframework.stereotype.Repository
 import java.sql.ResultSet
 import java.time.LocalDateTime
-import kotlin.math.floor
 
 @Repository
 class ProfileRepository(
@@ -212,10 +211,14 @@ class ProfileRepository(
     }
 
     fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0): List<Long> {
-        val minAge = age - level + 1
+        val minAge = age - level - 1
         val maxAge = age + level + 1
-        val minVibe = vibe - level
-        val maxVibe = vibe + level
+        var vibeLevel = level
+        if (level > 0) {
+            vibeLevel -= 1
+        }
+        val minVibe = vibe - vibeLevel
+        val maxVibe = vibe + vibeLevel
         val sql = """
             SELECT id FROM profiles 
             WHERE is_active = true 
