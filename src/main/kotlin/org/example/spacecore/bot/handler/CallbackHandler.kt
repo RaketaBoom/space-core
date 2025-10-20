@@ -103,10 +103,10 @@ class CallbackHandler(
 
         val profileId = msg.data.removePrefix("dislike_").toLong()
         val lastProfileId = (userStateService.getTempData(msg.userId)["profileId"] as String?)?.toLongOrNull() ?: 0
-        if (profileId == lastProfileId) {
+//        if (profileId == lastProfileId) {
             MessageUtil.editMessageForm(msg.chatId, msg.messageId, profileId, telegramClient)
             getProfile(msg, telegramClient)
-        }
+//        }
         return listOf()
     }
 
@@ -189,6 +189,17 @@ class CallbackHandler(
         }
         userStateService.putTempData(msg.userId, "level", level)
         browsingQueue[msg.userId] = matchingProfiles.toMutableList()
+    }
+
+    fun addNewForm(msg: MessageDto, userProfile: Profile) {
+        val profiles = profileService.findMatchingProfiles(userProfile, 4, true)
+        for (profile in profiles) {
+            val profilesList = browsingQueue[profileService.getTelegramId(profile)]
+            if (profilesList != null){
+                profilesList.add(2, msg.userId)
+                browsingQueue[profile] = profilesList
+            }
+        }
     }
 
     fun getMessageOrMyProfile(

@@ -56,7 +56,7 @@ class MessageHandler(
         telegramClient: TelegramClient
     ): List<SendMessage> {
         return if (msg.text.startsWith("/")) {
-            handleCommand(msg,  state, telegramClient)
+            handleCommand(msg, state, telegramClient)
         } else
             when (state) {
                 UserState.START -> handleStart(msg, telegramClient)
@@ -71,6 +71,8 @@ class MessageHandler(
     }
 
     private fun handleStart(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        telegramClient.execute(AdminText.newUserAdmin(msg, callbackHandler.adminId))
+
         val checkUsername = callbackHandler.checkAndEditUsername(msg)
         if (checkUsername.isNotEmpty())
             return checkUsername

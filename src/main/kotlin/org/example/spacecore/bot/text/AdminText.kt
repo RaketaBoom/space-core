@@ -36,13 +36,34 @@ class AdminText {
         }
 
 
-        fun blockProfileAdmin(msg: MessageDto, adminId: Long, blockedUserName: String?, blockedUserId: Long?): List<SendMessage> {
+        fun blockProfileAdmin(
+            msg: MessageDto,
+            adminId: Long,
+            blockedUserName: String?,
+            blockedUserId: Long?
+        ): List<SendMessage> {
             return listOf(
                 createSendMessage(
                     adminId,
                     "Пользователь @${msg.userName} отправил жалобу на профиль: @$blockedUserName",
                     Keyboard.blockProfile(blockedUserId)
                 )
+            )
+        }
+
+        fun newUserAdmin(msg: MessageDto, adminId: Long): SendMessage {
+            return createSendMessage(
+                adminId,
+                "Пользователь @${msg.userName} запустил бота",
+                disableNotification = true
+            )
+        }
+
+        fun newProfileAdmin(msg: MessageDto, adminId: Long): SendMessage {
+            return createSendMessage(
+                adminId,
+                "Пользователь @${msg.userName} создал анкету",
+                disableNotification = true
             )
         }
     }

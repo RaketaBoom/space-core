@@ -2,7 +2,6 @@ package org.example.spacecore.bot.util
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
-import org.example.spacecore.bot.model.Profile
 import org.example.spacecore.bot.service.UserStateService
 import java.util.concurrent.TimeUnit
 

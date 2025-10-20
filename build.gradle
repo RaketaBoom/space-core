@@ -54,3 +54,11 @@ kotlin {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Task для подготовки Docker
+tasks.named("prepareForDocker") {
+    from(tasks.named("bootJar"))
+    into(layout.projectDirectory)
+    rename { "spacecore-bot.jar" }
+    dependsOn("build")
+}

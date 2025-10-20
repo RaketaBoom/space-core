@@ -210,7 +210,7 @@ class ProfileRepository(
         return profile
     }
 
-    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0): List<Long> {
+    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0, vibeBetween: Boolean = false): List<Long> {
         val minAge = age - level - 1
         val maxAge = age + level + 1
         var vibeLevel = level
@@ -225,7 +225,7 @@ class ProfileRepository(
             AND gender = ?
             AND telegram_id != ?
 			AND age between ? and ?
-			AND vibe IN (?, ?)
+			AND vibe ${ if (vibeBetween) "between ? and ?" else "IN (?, ?)"}
             ORDER BY RANDOM()
         """.trimIndent()
 
