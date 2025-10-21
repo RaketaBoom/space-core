@@ -67,10 +67,10 @@ fun createProfileMessage(
 
 fun profileMessageText(profile: Profile, myProfile: Boolean = false, toAdmin: Boolean = false): String {
     return """
-            ${if (toAdmin) "Анкета пользователя:" else ""}${if (myProfile) "Ваша анкета:\n" else ""}
-            ${profile.name}, ${profile.age}
-            ${profile.description}
-            ${if (myProfile) "Вайб: ${profile.vibe.value}" else ""}
+${if (toAdmin) "Анкета пользователя:" else ""}${if (myProfile) "Ваша анкета:\n" else ""}
+${profile.name}, ${profile.age}
+${profile.description}
+${if (myProfile) "Вайб: ${profile.vibe.value}" else ""}
         """.trimIndent()
 }
 
