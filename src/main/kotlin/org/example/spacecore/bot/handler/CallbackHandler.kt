@@ -196,7 +196,11 @@ class CallbackHandler(
         for (profile in profiles) {
             val profilesList = browsingQueue[profileService.getTelegramId(profile)]
             if (profilesList != null){
-                profilesList.add(2, msg.userId)
+                if (profilesList.size > 1) {
+                    profilesList.add(2, msg.userId)
+                } else if (profilesList.size == 1)  {
+                    profilesList.add(1, msg.userId)
+                }
                 browsingQueue[profile] = profilesList
             }
         }
