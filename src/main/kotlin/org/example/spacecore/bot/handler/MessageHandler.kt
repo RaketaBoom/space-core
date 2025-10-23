@@ -12,9 +12,12 @@ import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createProfileMessage
 import org.springframework.stereotype.Component
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
 import org.telegram.telegrambots.meta.generics.TelegramClient
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 
 @Component
@@ -79,7 +82,14 @@ class MessageHandler(
 
         userStateService.updateState(msg.userId, UserState.ENTERING_NAME)
 
-        MessageUtil.deleteMessage(msg, telegramClient)
+        val scheduler = Executors.newScheduledThreadPool(2)
+        scheduler.schedule({
+            try {
+                MessageUtil.deleteMessage(msg, telegramClient)
+            } catch (e: Exception) {
+                LogUtil.log(msg, "Failed to delete message: ${e.message}")
+            }
+        }, 3, TimeUnit.SECONDS)
         return FormText.start(msg)
     }
 

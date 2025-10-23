@@ -19,6 +19,7 @@ import org.telegram.telegrambots.meta.generics.TelegramClient
 import org.example.spacecore.bot.util.createProfileMessage
 import org.example.spacecore.bot.util.createUser
 import org.example.spacecore.bot.util.profileMessageText
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
 import org.telegram.telegrambots.meta.api.methods.botapimethods.BotApiMethodMessage
 
 @Component
@@ -40,6 +41,7 @@ class CallbackHandler(
         } else {
             handlerService.executeCallback(messageDto.data, messageDto, telegramClient)
         }
+        telegramClient.execute(AnswerCallbackQuery.builder().callbackQueryId(callbackQuery.id).build())
         return result as? List<BotApiMethodMessage> ?: listOf()
     }
 
