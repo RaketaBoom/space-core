@@ -7,6 +7,7 @@ import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.FormText
 import org.example.spacecore.bot.text.MenuText
+import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createProfileMessage
 import org.example.spacecore.bot.util.createUser
@@ -25,6 +26,7 @@ class EditProfileCallback(
     //Редактирование профиля
     @Callback("editing")
     private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleProfiles");
         userStateService.updateState(msg.userId, UserState.MY_PROFILE)
         if (!MessageUtil.editMessageProfile(msg.chatId, msg.messageId, telegramClient)) {
             MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
@@ -38,6 +40,7 @@ class EditProfileCallback(
 
     @Callback("edit")
     private fun handleEdit(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleEdit");
         val checkUsername = callbackHandler.checkAndEditUsername(msg)
         if (checkUsername.isNotEmpty())
             return checkUsername
@@ -49,6 +52,7 @@ class EditProfileCallback(
 
     @Callback("changeVibe")
     private fun handleChangeVibe(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleChangeVibe");
         userStateService.updateStateAndData(msg.userId, UserState.SELECTING_VIBE, "edit",true)
 
         MessageUtil.deleteMessage(msg, telegramClient)
@@ -59,6 +63,7 @@ class EditProfileCallback(
 
     @Callback("changeName")
     private fun handleChangeName(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleChangeName");
         userStateService.updateStateAndData(msg.userId, UserState.ENTERING_NAME, "edit", true)
         profileService.updateUserName(msg.userId, createUser(msg))
 
@@ -68,6 +73,7 @@ class EditProfileCallback(
 
     @Callback("changeAge")
     private fun handleChangeAge(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleChangeAge");
         userStateService.updateStateAndData(msg.userId, UserState.ENTERING_AGE, "edit", true)
 
         MessageUtil.deleteMessage(msg, telegramClient)
@@ -76,6 +82,7 @@ class EditProfileCallback(
 
     @Callback("changePhoto")
     private fun handleChangePhoto(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleChangePhoto");
         userStateService.updateStateAndData(msg.userId, UserState.UPLOADING_PHOTO, "edit", true)
 
         MessageUtil.deleteMessage(msg, telegramClient)
@@ -84,6 +91,7 @@ class EditProfileCallback(
 
     @Callback("changeDescription")
     private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleChangePhoto");
         userStateService.updateStateAndData(msg.userId, UserState.ENTERING_DESCRIPTION, "edit", true)
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId,telegramClient)
@@ -92,6 +100,7 @@ class EditProfileCallback(
 
     @Callback("profileInactive")
     private fun handleInactive(msg: MessageDto, telegramClient: TelegramClient  ): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleInactive");
         profileService.updateActivityStatus(msg.userId, false)
         userStateService.updateState(msg.userId, UserState.DISABLED)
 

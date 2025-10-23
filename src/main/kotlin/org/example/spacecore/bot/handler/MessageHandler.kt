@@ -8,10 +8,9 @@ import org.example.spacecore.bot.text.AdminText
 import org.example.spacecore.bot.text.FormText
 import org.example.spacecore.bot.text.MenuText
 import org.example.spacecore.bot.text.ReportText
+import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createProfileMessage
-import org.example.spacecore.bot.util.createSendPhoto
-import org.example.spacecore.bot.util.createUser
 import org.springframework.stereotype.Component
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.message.Message
@@ -71,6 +70,7 @@ class MessageHandler(
     }
 
     private fun handleStart(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "start");
         telegramClient.execute(AdminText.newUserAdmin(msg, callbackHandler.adminId))
 
         val checkUsername = callbackHandler.checkAndEditUsername(msg)
@@ -84,6 +84,7 @@ class MessageHandler(
     }
 
     private fun handleName(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleName");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         if (msg.text.length > 50) {
@@ -101,6 +102,7 @@ class MessageHandler(
     }
 
     private fun handleAge(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleAge");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         val age = msg.text.toIntOrNull()
@@ -118,6 +120,7 @@ class MessageHandler(
     }
 
     private fun handleDescription(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleDescription");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         if (msg.text.length > 800) {
@@ -139,6 +142,7 @@ class MessageHandler(
         state: UserState,
         telegramClient: TelegramClient
     ): List<SendMessage> {
+        LogUtil.log(msg, "handlePhotoMessage");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         if (state == UserState.UPLOADING_PHOTO) {
@@ -164,6 +168,7 @@ class MessageHandler(
     }
 
     private fun handleReportEnded(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleReportEnded");
         userStateService.updateState(msg.userId, UserState.MENU)
 
         MessageUtil.deleteMessage(msg, telegramClient)
@@ -179,6 +184,7 @@ class MessageHandler(
     //Admin
 
     private fun handleReplyReport(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleReplyReport");
         userStateService.updateState(msg.userId, UserState.MENU)
 
         val reportedId = (userStateService.getTempData(msg.userId)["reported_id"] as String?)?.toLong() ?: -1

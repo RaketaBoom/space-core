@@ -9,6 +9,7 @@ import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.AdminText
 import org.example.spacecore.bot.text.FormText
+import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createProfileMessage
 import org.springframework.stereotype.Component
@@ -25,6 +26,7 @@ class NewFormHandler(
 
     @Callback("gender_")
     private fun handleGender(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleGender");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         val gender = Gender.fromString(msg.data.removePrefix("gender_"))
@@ -37,6 +39,7 @@ class NewFormHandler(
 
     @Callback("lookingFor_")
     private fun handleLookingForSelection(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleLookingForSelection");
         val editing: Boolean = ((userStateService.getTempData(msg.userId)["edit"] ?: "") as String).toBoolean()
 
         val lookingFor = Gender.fromString(msg.data.removePrefix("lookingFor_"))
@@ -49,6 +52,7 @@ class NewFormHandler(
 
     @Callback("vibe_")
     private fun handleVibeSelection(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleVibeSelection");
         val vibeValue = msg.data.removePrefix("vibe_").toInt()
         val vibe = Vibe.fromInt(vibeValue)
         profileService.updateVibe(msg.userId, vibe)

@@ -8,6 +8,7 @@ import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.AdminText
 import org.example.spacecore.bot.text.MenuText
 import org.example.spacecore.bot.text.ReportText
+import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.createProfileMessage
 import org.springframework.stereotype.Component
@@ -23,6 +24,7 @@ class ReportCallback(
 
     @Callback("report")
     private fun handleReport(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleReport");
         userStateService.updateState(msg.userId, UserState.REPORT)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
 
@@ -31,6 +33,7 @@ class ReportCallback(
 
     @Callback("reportBlock_")
     private fun handleBlock(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleBlock");
         val blockedId = msg.data.removePrefix("reportBlock_").toLong()
         val blockedTelegramId = profileService.getTelegramId(blockedId)
         callbackHandler.getProfile(msg, telegramClient)
@@ -44,6 +47,7 @@ class ReportCallback(
     //Admin
     @Callback("replyReport_")
     private fun handleReplyReport(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleReplyReport");
         if (callbackHandler.isAdmin(msg.userId)) {
             val reportedId = msg.data.removePrefix("replyReport_").toLong()
             userStateService.updateStateAndData(
@@ -60,6 +64,7 @@ class ReportCallback(
 
     @Callback("blockProfile_")
     private fun handleBlockProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleBlockProfile");
         if (callbackHandler.isAdmin(msg.userId)) {
             var blockedId = msg.data.removePrefix("blockProfile_").toLong()
             blockedId = profileService.getTelegramId(blockedId)

@@ -9,6 +9,7 @@ import org.example.spacecore.bot.service.MatchService
 import org.example.spacecore.bot.service.ProfileService
 import org.example.spacecore.bot.service.UserStateService
 import org.example.spacecore.bot.text.MenuText
+import org.example.spacecore.bot.util.LogUtil
 import org.example.spacecore.bot.util.MessageUtil
 import org.example.spacecore.bot.util.TimedCacheMap
 import org.springframework.stereotype.Component
@@ -45,6 +46,7 @@ class CallbackHandler(
 
     @Callback("myProfile")
     fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleCallback");
         userStateService.updateState(msg.userId, UserState.MY_PROFILE)
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
 
@@ -56,6 +58,7 @@ class CallbackHandler(
 
     @Callback("menu")
     fun handleMenu(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleMenu");
         userStateService.updateState(msg.userId, UserState.MENU)
 //        browsingQueue.remove(msg.userId)
 
@@ -66,6 +69,7 @@ class CallbackHandler(
 
     @Callback("profiles")
     private fun handleProfiles(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleProfiles");
         userStateService.updateState(msg.userId, UserState.BROWSING_PROFILES)
 
         MessageUtil.deleteMessage(msg, telegramClient)
@@ -75,6 +79,7 @@ class CallbackHandler(
 
     @Callback("like_")
     private fun handleLike(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleLike");
         val checkUsername = checkAndEditUsername(msg)
         if (checkUsername.isNotEmpty())
             return checkUsername
@@ -97,6 +102,7 @@ class CallbackHandler(
 
     @Callback("dislike_")
     private fun handleDislike(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleDislike");
         val checkUsername = checkAndEditUsername(msg)
         if (checkUsername.isNotEmpty())
             return checkUsername
@@ -112,6 +118,7 @@ class CallbackHandler(
 
     @Callback("match_")
     private fun handleMatch(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
+        LogUtil.log(msg, "handleMatch");
         val matchedUserId = profileService.getTelegramId(msg.data.removePrefix("match_").toLong())
 
         MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
@@ -120,6 +127,7 @@ class CallbackHandler(
 
     @Callback("open_")
     private fun handleOpenForm(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
+        LogUtil.log(msg, "handleOpenForm");
         val profileId = msg.data.removePrefix("open_").toLong()
         val profile = profileService.getById(profileId)
         if (profile != null)
@@ -132,6 +140,7 @@ class CallbackHandler(
 
     @Callback("active")
      fun handleActive(msg: MessageDto, telegramClient: TelegramClient, twoDelete: Boolean = false): List<SendMessage> {
+        LogUtil.log(msg, "handleActive");
         profileService.updateActivityStatus(msg.userId, true)
         userStateService.updateState(msg.userId, UserState.MENU)
 
