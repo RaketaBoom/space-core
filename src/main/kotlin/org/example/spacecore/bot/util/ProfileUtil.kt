@@ -70,7 +70,7 @@ fun profileMessageText(profile: Profile, myProfile: Boolean = false, toAdmin: Bo
 ${if (toAdmin) "Анкета пользователя:" else ""}${if (myProfile) "Ваша анкета:\n" else ""}
 ${profile.name}, ${profile.age}
 ${profile.description}
-${if (myProfile) "Вайб: ${profile.vibe.value}" else ""}
+${if (myProfile) "Вайб: ${profile.vibe.toSmile()} - ${profile.vibe.value}" else ""}
         """.trimIndent()
 }
 
