@@ -60,7 +60,7 @@ class FormText {
         }
 
         fun vibe(msg: MessageDto): SendPhoto{
-            return createSendPhoto(msg, " AgACAgIAAxkBAAMVaPytvUEEx7F7Meryy31bg_88HVcAAnr9MRu9duBLULLPS7p2rbYBAAMCAAN5AAM2BA",//"AgACAgIAAxkBAAIGb2jkHNCmDAj5rvSydWsyGF27iIHhAAJl9TEbzM0pS0PE-MWGTwmxAQADAgADeQADNgQ",
+            return createSendPhoto(msg, "AgACAgIAAxkBAAMVaPytvUEEx7F7Meryy31bg_88HVcAAnr9MRu9duBLULLPS7p2rbYBAAMCAAN5AAM2BA",//"AgACAgIAAxkBAAIGb2jkHNCmDAj5rvSydWsyGF27iIHhAAJl9TEbzM0pS0PE-MWGTwmxAQADAgADeQADNgQ",
                     "Выберите ваш вайб (1-10):", Keyboard.vibeKeyboard())
         }
 
