@@ -8,6 +8,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto
 import org.telegram.telegrambots.meta.api.objects.InputFile
 import org.telegram.telegrambots.meta.api.objects.User
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException
+import org.telegram.telegrambots.meta.generics.TelegramClient
 
 fun createSendMessage(msg: MessageDto, text: String, replyMarkup: InlineKeyboardMarkup? = null, disableNotification: Boolean = false): SendMessage {
     return when (replyMarkup) {
@@ -79,7 +81,8 @@ fun createProfileMessage(
     profile: Profile,
     myProfile: Boolean = false,
     editing: Boolean = false,
-    toAdmin: Boolean = false
+    toAdmin: Boolean = false,
+    telegramClient: TelegramClient? = null
 ): SendPhoto {
     val messageText = profileMessageText(profile, myProfile, toAdmin)
 
@@ -88,6 +91,14 @@ fun createProfileMessage(
         true -> if (!editing) Keyboard.myProfile() else Keyboard.editingProfile()
     }
 
+    try {
+        return createSendPhoto(msg, profile.photoId, messageText, keyboard, toAdmin)
+    }
+    catch (e: TelegramApiException) {
+        System.err.println("Error send my Profile: " + e.message)
+        telegramClient?.execute(createSendMessage(msg,
+            "Пожалуйста, загрузите фото снова!\n\n$messageText", keyboard, toAdmin))
+    }
     return createSendPhoto(msg, profile.photoId, messageText, keyboard, toAdmin)
 }
 
