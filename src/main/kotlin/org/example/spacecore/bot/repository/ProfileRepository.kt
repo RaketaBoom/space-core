@@ -210,7 +210,7 @@ class ProfileRepository(
         return profile
     }
 
-    fun findMatchingProfiles(age: Int, vibe: Int, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0, vibeBetween: Boolean = false): List<Long> {
+    fun findMatchingProfiles(age: Int, vibe: Int, gender: Gender, lookingFor: Gender, excludeTelegramId: Long, level: Int = 0, vibeBetween: Boolean = false): List<Long> {
         val minAge = age - level - 1
         val maxAge = age + level + 1
         var vibeLevel = level
@@ -223,12 +223,13 @@ class ProfileRepository(
             SELECT id FROM profiles 
             WHERE is_active = true 
             AND gender = ?
+            AND looking_for = ?
             AND telegram_id != ?
 			AND age between ? and ?
 			AND vibe ${ if (vibeBetween) "between ? and ?" else "IN (?, ?)"}
             ORDER BY RANDOM()
         """.trimIndent()
 
-        return jdbcTemplate.queryForList(sql, Long::class.java, lookingFor.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
+        return jdbcTemplate.queryForList(sql, Long::class.java, lookingFor.name, gender.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
     }
 }

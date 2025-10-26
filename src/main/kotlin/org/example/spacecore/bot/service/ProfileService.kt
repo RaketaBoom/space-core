@@ -108,6 +108,7 @@ class ProfileService(
         return profileRepository.findMatchingProfiles(
             age = currentProfile.age,
             vibe = currentProfile.vibe.value,
+            gender = currentProfile.gender,
             lookingFor = currentProfile.lookingFor,
             excludeTelegramId = currentProfile.telegramId,
             level = level,
