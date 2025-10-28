@@ -51,10 +51,13 @@ class AdminText {
             )
         }
 
-        fun newUserAdmin(msg: MessageDto, adminId: Long): SendMessage {
+        fun newUserAdmin(msg: MessageDto, adminId: Long, userCount: Int): SendMessage {
             return createSendMessage(
                 adminId,
-                "Пользователь @${msg.userName} запустил бота",
+                """
+                    Пользователь @${msg.userName} запустил бота
+                    Всего пользователей: $userCount
+                """,
                 disableNotification = true
             )
         }

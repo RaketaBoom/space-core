@@ -149,6 +149,10 @@ class ProfileService(
         return profile
     }
 
+    fun getProfilesCount(): Int {
+        return profileRepository.getProfilesCount()
+    }
+
     data class UserInfo(
         val id: Long,
         val username: String?,

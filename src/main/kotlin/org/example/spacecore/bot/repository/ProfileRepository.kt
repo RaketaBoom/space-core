@@ -232,4 +232,12 @@ class ProfileRepository(
 
         return jdbcTemplate.queryForList(sql, Long::class.java, lookingFor.name, gender.name, excludeTelegramId, minAge, maxAge, minVibe, maxVibe)
     }
+
+    fun getProfilesCount(): Int {
+        val sql = """
+            SELECT COUNT(*) FROM profiles
+        """.trimIndent()
+
+        return jdbcTemplate.queryForObject(sql, Int::class.java) ?: 0
+    }
 }

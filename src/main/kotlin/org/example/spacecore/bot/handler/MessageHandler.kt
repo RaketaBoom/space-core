@@ -74,7 +74,7 @@ class MessageHandler(
 
     private fun handleStart(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         LogUtil.log(msg, "start");
-        telegramClient.execute(AdminText.newUserAdmin(msg, callbackHandler.adminId))
+        telegramClient.execute(AdminText.newUserAdmin(msg, callbackHandler.adminId, profileService.getProfilesCount()))
 
         val checkUsername = callbackHandler.checkAndEditUsername(msg)
         if (checkUsername.isNotEmpty())
