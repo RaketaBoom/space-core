@@ -70,7 +70,7 @@ class Keyboard {
         fun profile(profile: Profile): InlineKeyboardMarkup {
             return createInlineKeyboard(
                 mutableListOf(
-                    mutableListOf(mutableListOf("❤️", "like_${profile.id}"), mutableListOf("👎","dislike_${profile.id}")),
+                    mutableListOf(mutableListOf("❤️", "like_${profile.id}"), mutableListOf("➡\uFE0F","dislike_${profile.id}")),
                     mutableListOf(mutableListOf("Пожаловаться", "reportBlock_${profile.id}")),
                     mutableListOf(MENU)
                 )
@@ -105,8 +105,8 @@ class Keyboard {
             return createInlineKeyboard(
                 mutableListOf(
                     mutableListOf(PROFILES),
-                    mutableListOf(mutableListOf("Моя анкета", "myProfile")),
-                    mutableListOf(mutableListOf("Сообщить о проблеме", "report"))
+                    mutableListOf(mutableListOf("\uD83D\uDC64 Моя анкета", "myProfile")),
+                    mutableListOf(mutableListOf("⚠\uFE0F Сообщить о проблеме", "report"))
                 )
             )
         }
