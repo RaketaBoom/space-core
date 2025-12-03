@@ -1,0 +1,63 @@
+databaseChangeLog:
+  - changeSet:
+      id: 3
+      author: system
+      changes:
+        - createTable:
+            tableName: user_states
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: telegram_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+                    nullable: false
+              - column:
+                  name: state
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: temp_data
+                  type: JSONB
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                    default: CURRENT_TIMESTAMP
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  constraints:
+                    nullable: false
+                    default: CURRENT_TIMESTAMP
+
+        - createIndex:
+            indexName: idx_user_states_telegram_id
+            tableName: user_states
+            columns:
+              - column:
+                  name: telegram_id
+
+        - createIndex:
+            indexName: idx_user_states_state
+            tableName: user_states
+            columns:
+              - column:
+                  name: state
+
+        - addForeignKeyConstraint:
+            constraintName: fk_user_states_profiles
+            baseTableName: user_states
+            baseColumnNames: telegram_id
+            referencedTableName: profiles
+            referencedColumnNames: telegram_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
