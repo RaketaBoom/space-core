@@ -3,6 +3,7 @@ package org.example.spacecore.bot.handler
 import org.example.spacecore.bot.callback.HandlerService
 import org.example.spacecore.bot.callback.annotations.Callback
 import org.example.spacecore.bot.dto.MessageDto
+import org.example.spacecore.bot.model.Gender
 import org.example.spacecore.bot.model.Profile
 import org.example.spacecore.bot.model.UserState
 import org.example.spacecore.bot.service.MatchService
@@ -17,6 +18,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage
 import org.telegram.telegrambots.meta.api.objects.CallbackQuery
 import org.telegram.telegrambots.meta.generics.TelegramClient
 import org.example.spacecore.bot.util.createProfileMessage
+import org.example.spacecore.bot.util.createSendMessage
 import org.example.spacecore.bot.util.createUser
 import org.example.spacecore.bot.util.profileMessageText
 import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery
@@ -49,11 +51,13 @@ class CallbackHandler(
     @Callback("myProfile")
     fun handleMyProfile(msg: MessageDto, telegramClient: TelegramClient): List<BotApiMethodMessage> {
         LogUtil.log(msg, "handleCallback");
-        userStateService.updateState(msg.userId, UserState.MY_PROFILE)
-        MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
-
         val profile = profileService.getOrCreateProfile(msg.userId)
-        telegramClient.execute(createProfileMessage(msg, profile, true))
+        if (profile.photoId != ""){
+            userStateService.updateState(msg.userId, UserState.MY_PROFILE)
+            MessageUtil.deleteMessage(msg.chatId, msg.messageId, telegramClient)
+
+            telegramClient.execute(createProfileMessage(msg, profile, true))
+        } else return listOf(createSendMessage(msg.userId, "Сначала заполните анкету!"))
 
         return listOf()
     }
@@ -61,12 +65,15 @@ class CallbackHandler(
     @Callback("menu")
     fun handleMenu(msg: MessageDto, telegramClient: TelegramClient): List<SendMessage> {
         LogUtil.log(msg, "handleMenu");
-        userStateService.updateState(msg.userId, UserState.MENU)
-//        browsingQueue.remove(msg.userId)
+        val profile = profileService.getOrCreateProfile(msg.userId)
+        if (profile.photoId != "") {
+            userStateService.updateState(msg.userId, UserState.MENU)
+    //        browsingQueue.remove(msg.userId)
 
-        MessageUtil.deleteMessage(msg, telegramClient)
+            MessageUtil.deleteMessage(msg, telegramClient)
 
-        return MenuText.menu(msg)
+            return MenuText.menu(msg)
+        } else return listOf(createSendMessage(msg.userId, "Сначала заполните анкету!"))
     }
 
     @Callback("profiles")
